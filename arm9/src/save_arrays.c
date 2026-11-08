@@ -3,6 +3,7 @@
 #include "bag.h"
 #include "daycare.h"
 #include "easy_chat.h"
+#include "gunk/gunk_save.h"
 #include "hall_of_fame.h"
 #include "party.h"
 #include "player_data.h"
@@ -100,7 +101,8 @@ const struct SaveChunkHeader UNK_020EE700[] = {
     { 32, 0, (SAVSIZEFN)sub_0202BE98,           (SAVINITFN)sub_0202BEA0         },
     { 33, 0, (SAVSIZEFN)sub_0202C0E0,           (SAVINITFN)sub_0202C0E4         },
     { 34, 0, (SAVSIZEFN)Save_EasyChat_sizeof,   (SAVINITFN)Save_EasyChat_Init   },
-    { 35, 1, (SAVSIZEFN)PCStorage_sizeof,       (SAVINITFN)PCStorage_Init       },
+    { 35, 0, (SAVSIZEFN)GunkSave_sizeof,        (SAVINITFN)GunkSave_Init        },
+    { 36, 1, (SAVSIZEFN)PCStorage_sizeof,       (SAVINITFN)PCStorage_Init       },
 };
 
 const int UNK_020EE6D8 = NELEMS(UNK_020EE6E0);

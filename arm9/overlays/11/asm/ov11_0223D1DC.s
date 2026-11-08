@@ -1,5 +1,6 @@
 	.include "asm/macros.inc"
 	.include "global.inc"
+	.extern Gunk_QuickBallBagCommand
 	.section .text
 	.balign 4, 0
 
@@ -627,11 +628,8 @@ _0223D662:
 	strb r0, [r5, #4]
 	b _0223DB20
 _0223D68A:
-	ldr r1, _0223D718 ; =0x000021A8
-	ldr r0, [sp, #0x54]
-	mov r2, #0xe
-	str r2, [r0, r1]
-	mov r0, #6
+	ldr r0, [sp, #0x54] ; Gunk: a Quick Ball throw skips the Bag
+	bl Gunk_QuickBallBagCommand
 	strb r0, [r5]
 	b _0223DB20
 _0223D698:

@@ -1,5 +1,7 @@
 	.include "asm/macros.inc"
 	.include "global.inc"
+
+	.extern Gunk_BagTrySort
 	.section .text
 	.balign 4, 0
 
@@ -2035,6 +2037,14 @@ ov75_021E7B7C: ; 0x021E7B7C
 	mov r0, #2
 	pop {r3, r4, r5, r6, pc}
 _021E7BC0:
+	add r0, r5, #0 ; Gunk: Start sorts the open pocket
+	bl Gunk_BagTrySort
+	cmp r0, #0
+	beq _gunk_no_sort
+	add sp, #4
+	mov r0, #0
+	pop {r3, r4, r5, r6, pc}
+_gunk_no_sort:
 	mov r0, #0x57
 	lsl r0, r0, #2
 	ldr r0, [r5, r0]

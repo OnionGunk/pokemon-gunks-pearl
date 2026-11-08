@@ -1272,6 +1272,7 @@ Overlay OVERLAY_75
     ### Player's bag ###
     After OVERLAY_14
     Object overlay_75.o
+    Object gunk_bag.o
 }
 
 Overlay OVERLAY_76

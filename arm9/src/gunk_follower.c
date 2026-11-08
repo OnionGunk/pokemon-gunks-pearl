@@ -17,6 +17,16 @@
 #include "save_vars_flags.h"
 #include "unk_0205EC84.h"
 
+#include "bg_window.h"
+#include "heap.h"
+#include "main.h"
+#include "player_data.h"
+#include "string16.h"
+#include "task.h"
+#include "text_02054590.h"
+#include "unk_020051F4.h"
+#include "PAD_pad.h"
+
 // Gunk's Pokemon follower, stage 1. Design: C:\Projects\diamond-tools\notes\followers_plan.md (ported from the
 // Platinum hack's Following Platinum port; the sprites are HeartGold's own, see tools/gunk/followers).
 //
@@ -24,11 +34,27 @@
 // - it starts hidden on the player's tile and appears once it can step off it (doors: once it has walked out),
 // - it waits until the player is a quarter tile into a step, so it trails a little behind,
 // - catch-up: when it ends up more than one tile from where the player just was, it snaps there,
-// - while the player surfs or cycles, or walks with a partner, it stays hidden on the player's tile.
+// - while the player surfs, cycles, climbs a rock wall or walks with a partner, it hides and waits where it is
+//   (no Poke Ball animation yet); back on foot, it returns hidden to the player's tile and comes out as on arrival,
+// - when the player steps onto a door or another warp tile, it walks onto the player's tile and hides there, so it
+//   doesn't stand in front of the door during the fade (stage 2),
+// - it is paused with the other objects during scripts and menus (not pausing it hung Surf), but it keeps
+//   animating then (GunkFollower_ObjectDrawUpdate in gunk_follower_render.c),
+// - A on it: its cry and a short line (stage 2, GunkFollower_TryTalk).
+// The renderer (gunk_follower_render.c) draws a shiny lead with the texture's second palette;
+// param 1 of the object holds the shiny flag.
 
 #define TILE_BEHAVIOR_DOOR                0x69
 #define TILE_BEHAVIOR_ESCALATOR_FLIP_FACE 0x6A
 #define TILE_BEHAVIOR_ESCALATOR           0x6B
+#define TILE_BEHAVIOR_ROCK_CLIMB_N_S      0x4B
+#define TILE_BEHAVIOR_ROCK_CLIMB_E_W      0x4C
+
+#define GUNK_FOLLOWER_PARAM_SHINY 1
+
+#define FIELD_FRAME_TILE    994 // the field message box (as gunk_dexnav.c)
+#define FIELD_FRAME_PALETTE 10
+#define CHAR_SPACE_         0x01DE
 
 // Movement data (16 bytes, saved with the object). The first 8 bytes are vanilla follow-player's
 // (asm/unk_0205E4EC.s: sub_0205E5B4 and the helpers below read and write them).
@@ -41,7 +67,9 @@ typedef struct GunkFollowerMoveData {
     s16 spawnX;    // the tile it appeared on (hidden until it can leave it)
     s16 spawnZ;
     u8 arriving;
-    u8 padding[3];
+    u8 enteringWarp; // walking onto the player's warp tile; hides when it gets there
+    u8 suppressed;   // hidden and waiting where it is (Surf, bike, Rock Climb, a partner)
+    u8 padding;
 } GunkFollowerMoveData;
 
 extern BOOL sub_0205E5B4(LocalMapObject *object, GunkFollowerMoveData *data); // TRUE once the player exists
@@ -52,6 +80,13 @@ extern BOOL sub_0205E598(LocalMapObject *object, GunkFollowerMoveData *data); //
 extern void sub_02059D1C(LocalMapObject *object);                             // recomputes the height from the terrain
 extern BOOL sub_0205995C_Vanilla(LocalMapObject *object, u32 x, s32 y, u32 z);
 extern u8 GetMetatileBehavior(FieldSystem *fieldSystem, s32 x, s32 z);
+extern BOOL sub_0205481C(u8 behavior);                          // surfable water
+extern u32 sub_02059E80(u32 x, u32 z, u32 targetX, u32 targetZ); // direction from a tile to another
+extern u32 sub_0205E65C(LocalMapObject *object);                 // follow-player's walk speed (from the player's)
+extern u32 sub_0205AFDC(u32 direction, u32 action);              // the action turned to a direction
+extern void sub_0205AE0C(LocalMapObject *object, u32 action);    // starts a movement action
+extern void FieldSystem_GetFacingObject(FieldSystem *fieldSystem, LocalMapObject **object);
+extern void ClearFrameAndWindow2(struct Window *window, BOOL param1);
 
 static void GunkFollower_MoveInit(LocalMapObject *object);
 static void GunkFollower_MoveUpdate(LocalMapObject *object);
@@ -151,6 +186,12 @@ u32 GunkFollower_GetLeadSprite(FieldSystem *fieldSystem) {
     return lead == NULL ? 0 : GunkFollower_SpriteForMon(lead);
 }
 
+static BOOL GunkFollower_IsLeadShiny(FieldSystem *fieldSystem) {
+    struct Pokemon *lead = GunkFollower_GetLead(fieldSystem);
+
+    return lead != NULL && MonIsShiny(lead);
+}
+
 LocalMapObject *GunkFollower_Get(FieldSystem *fieldSystem) {
     LocalMapObject *object;
 
@@ -207,6 +248,7 @@ static LocalMapObject *GunkFollower_Spawn(FieldSystem *fieldSystem, u32 sprite, 
     MapObject_SetEventFlag(object, 0);
     MapObject_SetScriptID(object, 0);
     MapObject_SetParam(object, 0, 2);
+    MapObject_SetParam(object, GunkFollower_IsLeadShiny(fieldSystem), GUNK_FOLLOWER_PARAM_SHINY);
     MapObject_SetXRange(object, -1);
     MapObject_SetYRange(object, -1);
     GunkFollower_SetFlags(object);
@@ -217,6 +259,42 @@ static LocalMapObject *GunkFollower_Spawn(FieldSystem *fieldSystem, u32 sprite, 
     }
 
     return object;
+}
+
+// Surf (and Waterfall), the bike, Rock Climb, a partner walking with the player: no follower object at all. The Surf
+// hop never started with the follower object present (stage 1, not tracked down), so as the Platinum hack recalls it
+// to its Poke Ball, it is removed (ScrCmd_Surf / RockClimb / Waterfall call GunkFollower_OnFieldMove first) and
+// spawned again once the player is back on foot.
+static BOOL GunkFollower_IsFieldSuppressed(FieldSystem *fieldSystem, BOOL checkTile) {
+    s32 state = PlayerAvatar_GetState(fieldSystem->playerAvatar);
+    LocalMapObject *player;
+    u8 behavior;
+
+    if (state == PLAYER_STATE_CYCLING || state == PLAYER_STATE_SURFING) {
+        return TRUE;
+    }
+
+    if (Save_VarsFlags_CheckHaveFollower(Save_VarsFlags_Get(fieldSystem->saveData))) {
+        return TRUE;
+    }
+
+    if (!checkTile) {
+        return FALSE;
+    }
+
+    // Rock Climb: the climb moves the player over the wall's tiles
+    player = PlayerAvatar_GetMapObject(fieldSystem->playerAvatar);
+    behavior = GetMetatileBehavior(fieldSystem, (s32)MapObject_GetXCoord(player), (s32)MapObject_GetZCoord(player));
+
+    return behavior == TILE_BEHAVIOR_ROCK_CLIMB_N_S || behavior == TILE_BEHAVIOR_ROCK_CLIMB_E_W;
+}
+
+void GunkFollower_OnFieldMove(FieldSystem *fieldSystem) {
+    LocalMapObject *follower = GunkFollower_Get(fieldSystem);
+
+    if (follower != NULL) {
+        MapObject_Remove(follower);
+    }
 }
 
 static void GunkFollower_SpawnOnPlayer(FieldSystem *fieldSystem, u32 sprite) {
@@ -233,6 +311,10 @@ void GunkFollower_OnObjectsCreated(FieldSystem *fieldSystem) {
     // the field's objects exist now: the DexNav Pokétch app (loaded before the first field frame) can read the map
     GunkDexNav_SetFieldSystem(fieldSystem);
 
+    if (GunkFollower_IsFieldSuppressed(fieldSystem, FALSE)) {
+        sprite = 0; // surfing, cycling or with a partner: no follower until the player is back on foot
+    }
+
     if (follower == NULL) {
         if (sprite != 0) {
             GunkFollower_SpawnOnPlayer(fieldSystem, sprite);
@@ -247,6 +329,7 @@ void GunkFollower_OnObjectsCreated(FieldSystem *fieldSystem) {
     }
 
     MapObject_SetSpriteID(follower, sprite);
+    MapObject_SetParam(follower, GunkFollower_IsLeadShiny(fieldSystem), GUNK_FOLLOWER_PARAM_SHINY);
     GunkFollower_SetFlags(follower);
 
     // the restore clears the hidden flag; still arriving (saved in the movement data) = hidden
@@ -264,7 +347,7 @@ void GunkFollower_FieldUpdate(FieldSystem *fieldSystem) {
     }
 
     follower = GunkFollower_Get(fieldSystem);
-    sprite = GunkFollower_GetLeadSprite(fieldSystem);
+    sprite = GunkFollower_IsFieldSuppressed(fieldSystem, TRUE) ? 0 : GunkFollower_GetLeadSprite(fieldSystem);
 
     if (follower == NULL) {
         if (sprite != 0) {
@@ -278,9 +361,15 @@ void GunkFollower_FieldUpdate(FieldSystem *fieldSystem) {
         return;
     }
 
-    // a new lead: swap the graphics the way the script command for object graphics does
-    if (MapObject_GetSpriteID(follower) != sprite && !MapObject_CheckSingleMovement(follower)) {
-        sub_02057634(follower, sprite);
+    // a new lead (or a shiny one where the last wasn't): swap the graphics the way the script command for object
+    // graphics does; the new billboard starts from the normal palettes again
+    if (!MapObject_CheckSingleMovement(follower)) {
+        BOOL shiny = GunkFollower_IsLeadShiny(fieldSystem);
+
+        if (MapObject_GetSpriteID(follower) != sprite || MapObject_GetParam(follower, GUNK_FOLLOWER_PARAM_SHINY) != shiny) {
+            MapObject_SetParam(follower, shiny, GUNK_FOLLOWER_PARAM_SHINY);
+            sub_02057634(follower, sprite);
+        }
     }
 }
 
@@ -294,6 +383,15 @@ static void GunkFollower_MoveInit(LocalMapObject *object) {
     sub_02058544(object, 0);
     MapObject_ClearSingleMovement(object);
     MapObject_ClearFlag18(object, FALSE); // sets flag 18: others don't collide with it
+}
+
+// the player is between tiles (its position isn't its tile's centre)
+static BOOL GunkFollower_PlayerIsMoving(LocalMapObject *player) {
+    VecFx32 pos;
+
+    MapObject_CopyPositionVector(player, &pos);
+    return pos.x != (fx32)(MapObject_GetXCoord(player) * FX32_CONST(16) + FX32_CONST(8))
+        || pos.z != (fx32)(MapObject_GetZCoord(player) * FX32_CONST(16) + FX32_CONST(8));
 }
 
 // the player is at least a quarter tile into the step from its previous tile
@@ -337,24 +435,109 @@ static void GunkFollower_CatchUp(LocalMapObject *object, LocalMapObject *player)
 
 // while surfing, cycling or walking with a partner it waits hidden on the player's tile
 static BOOL GunkFollower_IsSuppressed(LocalMapObject *object) {
-    FieldSystem *fieldSystem = MapObject_GetFieldSystem(object);
-    s32 state = PlayerAvatar_GetState(fieldSystem->playerAvatar);
+    return GunkFollower_IsFieldSuppressed(MapObject_GetFieldSystem(object), TRUE);
+}
 
-    if (state == PLAYER_STATE_CYCLING || state == PLAYER_STATE_SURFING) {
+// Surf, bike, Rock Climb, a partner: it hides and waits where it is (it doesn't move at all, so it never shares the
+// player's tile or the Surf blob's while the player hops on or off), as the Platinum hack's "recall": once the player
+// is back on foot and has finished its step, it comes back hidden on the player's tile and appears as on arrival.
+// (Stage 2 first moved it onto the player's tile every frame; that hung Surf.)
+static BOOL GunkFollower_UpdateSuppressed(LocalMapObject *object, LocalMapObject *player, GunkFollowerMoveData *data) {
+    if (GunkFollower_IsSuppressed(object)) {
+        if (!data->suppressed) {
+            data->suppressed = TRUE;
+            data->arriving = FALSE;
+            data->enteringWarp = FALSE;
+        }
+
+        MapObject_SetVisible(object, TRUE);
         return TRUE;
     }
 
-    return Save_VarsFlags_CheckHaveFollower(Save_VarsFlags_Get(fieldSystem->saveData));
-}
-
-static void GunkFollower_StayOnPlayer(LocalMapObject *object, LocalMapObject *player, GunkFollowerMoveData *data) {
-    if (MapObject_GetXCoord(object) != MapObject_GetXCoord(player) || MapObject_GetZCoord(object) != MapObject_GetZCoord(player)) {
-        MapObject_SetPositionFromXYZAndDirection(object, MapObject_GetXCoord(player), MapObject_GetYCoord(player), MapObject_GetZCoord(player), MapObject_GetFacingDirection(player));
-        sub_02059D1C(object);
+    if (!data->suppressed) {
+        return FALSE;
     }
 
+    if (GunkFollower_PlayerIsMoving(player)) {
+        return TRUE; // the landing hop or the last step isn't finished yet
+    }
+
+    data->suppressed = FALSE;
+    MapObject_SetPositionFromXYZAndDirection(object, MapObject_GetXCoord(player), MapObject_GetYCoord(player), MapObject_GetZCoord(player), MapObject_GetFacingDirection(player));
+    sub_02059D1C(object);
     GunkFollower_SetArriving(object);
     sub_0205E63C(object, data);
+    return TRUE;
+}
+
+// warp tiles: stairs, building exits, warp panel, door, escalators, warps
+static BOOL GunkFollower_IsWarpTile(u8 behavior) {
+    return behavior == 0x5E || behavior == 0x5F || (behavior >= 0x62 && behavior <= 0x65) || behavior == 0x67
+        || behavior == TILE_BEHAVIOR_DOOR || behavior == TILE_BEHAVIOR_ESCALATOR_FLIP_FACE || behavior == TILE_BEHAVIOR_ESCALATOR
+        || (behavior >= 0x6C && behavior <= 0x6F);
+}
+
+// tiles it may not be seen on: it only appears once it has walked off them (doors, water after landing, rock walls)
+static BOOL GunkFollower_MustWalkOff(u8 behavior) {
+    return GunkFollower_IsWarpTile(behavior) || sub_0205481C(behavior)
+        || behavior == TILE_BEHAVIOR_ROCK_CLIMB_N_S || behavior == TILE_BEHAVIOR_ROCK_CLIMB_E_W;
+}
+
+// The player stepped onto a door or another warp tile: walk onto it after them and hide there (the fade follows).
+// Returns TRUE when it took over this frame's movement.
+static BOOL GunkFollower_UpdateWarpEntry(LocalMapObject *object, LocalMapObject *player, GunkFollowerMoveData *data) {
+    u32 x = MapObject_GetXCoord(object);
+    u32 z = MapObject_GetZCoord(object);
+    u32 playerX = MapObject_GetXCoord(player);
+    u32 playerZ = MapObject_GetZCoord(player);
+    s32 dx, dz;
+
+    if (data->enteringWarp) {
+        // the walk onto the warp tile is done
+        data->enteringWarp = FALSE;
+        GunkFollower_SetArriving(object);
+        sub_0205E63C(object, data);
+        return TRUE;
+    }
+
+    if (data->arriving || (x == playerX && z == playerZ)) {
+        return FALSE;
+    }
+
+    if (!GunkFollower_IsWarpTile(GetMetatileBehavior(MapObject_GetFieldSystem(object), (s32)playerX, (s32)playerZ))) {
+        return FALSE;
+    }
+
+    dx = (s32)x - (s32)playerX;
+    dz = (s32)z - (s32)playerZ;
+
+    if (dx < 0) {
+        dx = -dx;
+    }
+
+    if (dz < 0) {
+        dz = -dz;
+    }
+
+    if (dx + dz == 1 && !GunkFollower_PlayerIsMoving(player)) {
+        sub_0205AE0C(object, sub_0205AFDC(sub_02059E80(x, z, playerX, playerZ), sub_0205E65C(object)));
+        MapObject_SetSingleMovement(object);
+        data->state = 1;
+        data->enteringWarp = TRUE;
+        sub_0205E63C(object, data);
+        return TRUE;
+    }
+
+    if (dx + dz > 1) {
+        // too far behind to walk in before the fade: wait hidden on the warp tile
+        MapObject_SetPositionFromXYZAndDirection(object, playerX, MapObject_GetYCoord(player), playerZ, MapObject_GetFacingDirection(object));
+        sub_02059D1C(object);
+        GunkFollower_SetArriving(object);
+        sub_0205E63C(object, data);
+        return TRUE;
+    }
+
+    return FALSE; // the player's step onto the warp tile isn't finished yet: follow normally
 }
 
 // appears once the player has stepped off the arrival tile; on a door or escalator only once it has walked out
@@ -370,7 +553,7 @@ static void GunkFollower_UpdateArrival(LocalMapObject *object, LocalMapObject *p
     behavior = GetMetatileBehavior(fieldSystem, data->spawnX, data->spawnZ);
 
     if (MapObject_GetXCoord(object) == (u32)data->spawnX && MapObject_GetZCoord(object) == (u32)data->spawnZ) {
-        if (behavior == TILE_BEHAVIOR_DOOR || behavior == TILE_BEHAVIOR_ESCALATOR || behavior == TILE_BEHAVIOR_ESCALATOR_FLIP_FACE) {
+        if (GunkFollower_MustWalkOff(behavior)) {
             return;
         }
 
@@ -413,12 +596,17 @@ static void GunkFollower_MoveUpdate(LocalMapObject *object) {
     player = GunkFollower_PlayerObject(object);
 
     if (data->state == 0) {
-        if (GunkFollower_IsSuppressed(object)) {
-            GunkFollower_StayOnPlayer(object, player, data);
+        if (GunkFollower_UpdateSuppressed(object, player, data)) {
             return;
         }
 
-        GunkFollower_UpdateArrival(object, player, data);
+        if (GunkFollower_UpdateWarpEntry(object, player, data)) {
+            if (data->state == 0) {
+                return;
+            }
+        } else {
+            GunkFollower_UpdateArrival(object, player, data);
+        }
     }
 
     for (;;) {
@@ -434,6 +622,35 @@ static void GunkFollower_MoveUpdate(LocalMapObject *object) {
             break;
         }
     }
+}
+
+// ---- while it is paused with the other objects (scripts, menus, field tasks such as a door's)
+
+// Called every frame its graphics are updated while it is paused (gunk_follower_render.c). When the player has
+// stepped onto a door or another warp tile during the pause (the door field task moves the player itself), it
+// hides on the player's tile, so it isn't seen in front of the door during the fade.
+void GunkFollower_WhilePaused(LocalMapObject *object) {
+    GunkFollowerMoveData *data = GunkFollower_Data(object);
+    LocalMapObject *player = GunkFollower_PlayerObject(object);
+    u32 playerX = MapObject_GetXCoord(player);
+    u32 playerZ = MapObject_GetZCoord(player);
+
+    if (data->arriving || data->suppressed || data->state != 0 || MapObject_CheckVisible(object)) {
+        return;
+    }
+
+    if (MapObject_GetXCoord(object) == playerX && MapObject_GetZCoord(object) == playerZ) {
+        return;
+    }
+
+    if (!GunkFollower_IsWarpTile(GetMetatileBehavior(MapObject_GetFieldSystem(object), (s32)playerX, (s32)playerZ))) {
+        return;
+    }
+
+    MapObject_SetPositionFromXYZAndDirection(object, playerX, MapObject_GetYCoord(player), playerZ, MapObject_GetFacingDirection(object));
+    sub_02059D1C(object);
+    GunkFollower_SetArriving(object);
+    sub_0205E63C(object, data);
 }
 
 // ---- collision: the player walks through the follower
@@ -464,4 +681,121 @@ BOOL sub_0205995C(LocalMapObject *object, u32 x, s32 y, u32 z) {
     }
 
     return ret;
+}
+
+// ---- talking to the follower (stage 2): its cry and a short line
+
+typedef struct GunkFollowerTalk {
+    struct String *string;
+    u8 printer;
+} GunkFollowerTalk;
+
+static Window sTalkWindow;
+
+static void GunkFollower_AppendAscii(struct String *dst, const char *src) {
+    for (; *src != '\0'; src++) {
+        char c = *src;
+        u16 code;
+
+        if (c >= 'A' && c <= 'Z') {
+            code = (u16)(0x012B + (c - 'A'));
+        } else if (c >= 'a' && c <= 'z') {
+            code = (u16)(0x0145 + (c - 'a'));
+        } else if (c == '.') {
+            code = 0x01AE;
+        } else if (c == '!') {
+            code = 0x01AB;
+        } else if (c == '\'') {
+            code = 0x01B3;
+        } else {
+            code = CHAR_SPACE_;
+        }
+
+        StrAddChar(dst, code);
+    }
+}
+
+static BOOL Task_GunkFollowerTalk(TaskManager *taskManager) {
+    FieldSystem *fieldSystem = TaskManager_GetFieldSystem(taskManager);
+    GunkFollowerTalk *talk = TaskManager_GetEnvironment(taskManager);
+    u32 *state = TaskManager_GetStatePtr(taskManager);
+
+    switch (*state) {
+    case 0:
+        MapObjectManager_PauseAllMovement(fieldSystem->mapObjectManager); // the follower itself keeps animating
+        sub_020545B8(fieldSystem->bgConfig, &sTalkWindow, 3);
+        sub_02054608(&sTalkWindow, Save_PlayerData_GetOptionsAddr(fieldSystem->saveData));
+        talk->printer = (u8)sub_02054658(&sTalkWindow, talk->string, Save_PlayerData_GetOptionsAddr(fieldSystem->saveData), 1);
+        (*state)++;
+        break;
+    case 1:
+        if (sub_020546C8(talk->printer)) {
+            (*state)++;
+        }
+        break;
+    case 2:
+        if (gSystem.newKeys & (PAD_BUTTON_A | PAD_BUTTON_B)) {
+            ClearFrameAndWindow2(&sTalkWindow, FALSE);
+            RemoveWindow(&sTalkWindow);
+            String_Delete(talk->string);
+            Heap_Free(talk);
+            MapObjectManager_UnpauseAllMovement(fieldSystem->mapObjectManager);
+            return TRUE;
+        }
+        break;
+    }
+
+    return FALSE;
+}
+
+BOOL GunkFollower_TryTalk(void *input, FieldSystem *fieldSystem) {
+    LocalMapObject *follower;
+    LocalMapObject *facing = NULL;
+    struct Pokemon *lead;
+    GunkFollowerTalk *talk;
+    u32 friendship;
+
+    // FieldInput's first halfword, bit 0: A was pressed and the player may interact (as the vanilla talk check)
+    if ((*(u16 *)input & 1) == 0) {
+        return FALSE;
+    }
+
+    follower = GunkFollower_Get(fieldSystem);
+
+    if (follower == NULL || MapObject_CheckVisible(follower)) {
+        return FALSE;
+    }
+
+    FieldSystem_GetFacingObject(fieldSystem, &facing);
+
+    if (facing != follower) {
+        return FALSE;
+    }
+
+    lead = GunkFollower_GetLead(fieldSystem);
+
+    if (lead == NULL) {
+        return FALSE;
+    }
+
+    // face the player (directions 0 N, 1 S, 2 W, 3 E: the opposite is dir ^ 1)
+    MapObject_SetFacingDirection(follower, PlayerAvatar_GetFacingDirection(fieldSystem->playerAvatar) ^ 1);
+    sub_02005578((u16)GetMonData(lead, MON_DATA_SPECIES, NULL));
+
+    talk = Heap_Alloc(HEAP_ID_FIELD, sizeof(GunkFollowerTalk));
+    talk->printer = 0;
+    talk->string = String_New(128, HEAP_ID_FIELD);
+    GetMonData(lead, MON_DATA_NICKNAME_STRING, talk->string);
+    friendship = GetMonData(lead, MON_DATA_FRIENDSHIP, NULL);
+
+    if (friendship >= 200) {
+        GunkFollower_AppendAscii(talk->string, " is overjoyed to be with you!");
+    } else if (friendship >= 100) {
+        GunkFollower_AppendAscii(talk->string, " is happy to be with you!");
+    } else {
+        GunkFollower_AppendAscii(talk->string, " is walking along with you.");
+    }
+
+    FieldSystem_CreateTask(fieldSystem, Task_GunkFollowerTalk, talk);
+    return TRUE;
 }

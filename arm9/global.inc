@@ -9379,6 +9379,11 @@
 .extern GunkFollower_OnObjectsCreated
 .extern GunkFollower_Movement
 .extern GunkFollower_Renderer
+.extern GunkFollower_ObjectDrawUpdate
+.extern GunkFollower_DetailsTable
+.extern GunkFollower_TextureTable
+.extern GunkFollower_FrameSeqTable
+.extern GunkFollower_ModelAnimTable
 .extern GunkFollower_BillboardAnims
 .extern GunkPoketchDexNav_Fill
 .extern GunkPoketchDexNav_IconIndex

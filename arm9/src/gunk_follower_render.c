@@ -4,12 +4,14 @@
 
 #include "map_object.h"
 
-// Gunk's Pokemon follower renderer (stage 1). Every follower graphics ID (0x200 + HeartGold follower index) uses
-// it (overlays/05/asm/gunk_follower/renderers.inc). It is the simple billboard renderer of ov05_021F1B0C.s
+// Gunk's Pokemon follower renderer. Every follower graphics ID (0x200 + HeartGold follower index) uses it
+// (asm/gunk_follower/renderers.inc). It lives in the arm9 static module: overlay 5 must keep its exact size. It is the simple billboard renderer of ov05_021F1B0C.s
 // (= Platinum's ov5_021ECA70.c, which the Platinum hack's follower renderer extends) with its own update:
 // - the animation follows the facing direction (HeartGold's sheets: 4 loops of 2 frames, one per direction),
 // - it always animates, so the Pokemon walks in place while it stands,
-// - a 2 px bob every 5 frames (as Following Platinum / the Platinum hack).
+// - a 2 px bob every 5 frames (as Following Platinum / the Platinum hack),
+// - shiny (object param 1, set by gunk_follower.c): every frame of the sequence uses palette 1 (tsure_poke1, HG's
+//   shiny palette) instead of 0 (as the Platinum hack: the billboard's frame sequence palette indexes).
 
 typedef struct BillboardAnim {
     u32 startFrame;
@@ -40,6 +42,13 @@ extern fx32 sub_0201F880(void *billboard);              // Billboard_GetFrameNum
 
 static void GunkFollower_RenderUpdate(LocalMapObject *object);
 
+// Billboard frame sequence (Platinum BillboardGfxSequence) at +0x94: startFrame, textureIdx, plttIdx (+0x9C),
+// seqCount (+0xA0); the per-frame indexes are read by sub_02022244 when the billboard is drawn
+#define BILLBOARD_PLTT_IDX(billboard)  (*(const u8 **)((u8 *)(billboard) + 0x9C))
+#define BILLBOARD_SEQ_COUNT(billboard) (*(u32 *)((u8 *)(billboard) + 0xA0))
+
+static const u8 sShinyPlttIdx[16] = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
+
 const UnkLMOCallbackStruct2 GunkFollower_Renderer = {
     ov05_021F1B0C,
     GunkFollower_RenderUpdate,
@@ -56,6 +65,10 @@ static void GunkFollower_RenderUpdate(LocalMapObject *object) {
         return;
     }
 
+    if (MapObject_GetParam(object, 1) && BILLBOARD_SEQ_COUNT(billboard) <= NELEMS(sShinyPlttIdx)) {
+        BILLBOARD_PLTT_IDX(billboard) = sShinyPlttIdx;
+    }
+
     sub_0201F830(billboard, (u16)MapObject_GetFacingDirection(object));
     sub_0201F854(billboard, FX32_ONE);
 
@@ -65,4 +78,25 @@ static void GunkFollower_RenderUpdate(LocalMapObject *object) {
     sub_02058BB4(object, &offset); // the object's sprite offset (Platinum MapObject_SetSpritePosOffset)
 
     ov05_021F1C48(object);
+}
+
+// ---- the per-frame graphics update of every object: ov05_021F1D8C's callers (map_object.c sub_02058348,
+// ov05_021E7504.s) call this instead
+// Vanilla skips paused objects; the follower is paused with everyone in scripts and menus (not pausing it hung
+// Surf), but its graphics keep updating, so it keeps walking in place and bobbing.
+
+extern void ov05_021F1D8C(LocalMapObject *object);
+void GunkFollower_ObjectDrawUpdate(LocalMapObject *object);
+
+void GunkFollower_ObjectDrawUpdate(LocalMapObject *object) {
+    if (MapObject_GetID(object) == GUNK_FOLLOWER_LOCAL_ID && MapObject_GetMovement(object) == GUNK_FOLLOWER_MOVEMENT
+        && MapObject_CheckMovementPaused(object)
+        && MapObjectManager_GetFlagsBitsMask(MapObject_GetManager(object), MAPOBJECTMANAGERFLAG_UNK2) == 0
+        && MapObject_CheckFlag14(object)) {
+        GunkFollower_WhilePaused(object);
+        sub_020586A0(object);
+        return;
+    }
+
+    ov05_021F1D8C(object);
 }

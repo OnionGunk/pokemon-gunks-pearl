@@ -694,7 +694,7 @@ ov05_021F244C: ; 0x021F244C
 	bl ov05_021F23F0
 	pop {r3, pc}
 	nop
-_021F245C: .word ov05_021FA0AC
+_021F245C: .word GunkFollower_TextureTable ; Gunk's: arm9 copy with the follower rows
 
 	thumb_func_start ov05_021F2460
 ov05_021F2460: ; 0x021F2460
@@ -705,7 +705,7 @@ ov05_021F2460: ; 0x021F2460
 	bl ov05_021F23F0
 	pop {r3, pc}
 	nop
-_021F2470: .word ov05_021FA0AC
+_021F2470: .word GunkFollower_TextureTable ; Gunk's: arm9 copy with the follower rows
 
 	thumb_func_start ov05_021F2474
 ov05_021F2474: ; 0x021F2474
@@ -817,7 +817,7 @@ ov05_021F251C: ; 0x021F251C
 	bl ov05_021F2764
 	pop {r3, r4, r5, pc}
 	.balign 4, 0
-_021F2544: .word ov05_021F90E4
+_021F2544: .word GunkFollower_FrameSeqTable ; Gunk's: arm9 copy with the follower rows
 _021F2548: .word 0x0000FFFF
 
 	thumb_func_start ov05_021F254C
@@ -840,7 +840,7 @@ ov05_021F254C: ; 0x021F254C
 	bl ov05_021F27AC
 	pop {r3, r4, r5, pc}
 	.balign 4, 0
-_021F2574: .word ov05_021F90E4
+_021F2574: .word GunkFollower_FrameSeqTable ; Gunk's: arm9 copy with the follower rows
 _021F2578: .word 0x0000FFFF
 
 	thumb_func_start ov05_021F257C
@@ -1996,7 +1996,7 @@ _021F2DD0:
 	mov r0, #0
 	pop {r3, pc}
 	.balign 4, 0
-_021F2DE0: .word ov05_021FAC6C
+_021F2DE0: .word GunkFollower_ModelAnimTable ; Gunk's: arm9 copy with the follower rows
 _021F2DE4: .word 0x0000FFFF
 
 	thumb_func_start ov05_021F2DE8
@@ -3170,8 +3170,8 @@ _021F36B6:
 	nop
 _021F36C4: .word ov05_021F9094
 _021F36C8: .word 0x0000FFFF
-_021F36CC: .word ov05_021F90E4
-_021F36D0: .word ov05_021FA0AC
+_021F36CC: .word GunkFollower_FrameSeqTable ; Gunk's: arm9 copy with the follower rows
+_021F36D0: .word GunkFollower_TextureTable ; Gunk's: arm9 copy with the follower rows
 _021F36D4: .word ov05_021F36D8
 
 	thumb_func_start ov05_021F36D8

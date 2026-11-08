@@ -2,6 +2,8 @@
 
 #include "global.h"
 
+#include "gunk/gunk_follower.h"
+
 #include "constants/global_fieldmap.h"
 #include "constants/items.h"
 #include "constants/sndseq.h"
@@ -2523,6 +2525,7 @@ BOOL ScrCmd_GetCurrentMapID(ScriptContext *ctx) { // 0201
 BOOL ScrCmd_RockClimb(ScriptContext *ctx) { // 00BF
     u16 partyPosition = ScriptGetVar(ctx);
     u32 playerDirection = PlayerAvatar_GetFacingDirection(ctx->fieldSystem->playerAvatar);
+    GunkFollower_OnFieldMove(ctx->fieldSystem); // Gunk's: no follower object during the HM's movement
     CallFieldTask_RockClimb(ctx->taskManager, playerDirection, partyPosition);
     return TRUE;
 }
@@ -2531,6 +2534,7 @@ BOOL ScrCmd_Surf(ScriptContext *ctx) { // 00C0
     sub_0205DD40(ctx->fieldSystem->unk90);
     u16 partyPosition = ScriptGetVar(ctx);
     u32 playerDirection = PlayerAvatar_GetFacingDirection(ctx->fieldSystem->playerAvatar);
+    GunkFollower_OnFieldMove(ctx->fieldSystem); // Gunk's: no follower object during the HM's movement
     CallFieldTask_Surf(ctx->taskManager, playerDirection, partyPosition);
     return TRUE;
 }
@@ -2538,6 +2542,7 @@ BOOL ScrCmd_Surf(ScriptContext *ctx) { // 00C0
 BOOL ScrCmd_Waterfall(ScriptContext *ctx) { // 00C1
     u16 partyPosition = ScriptGetVar(ctx);
     u32 playerDirection = PlayerAvatar_GetFacingDirection(ctx->fieldSystem->playerAvatar);
+    GunkFollower_OnFieldMove(ctx->fieldSystem); // Gunk's: no follower object during the HM's movement
     CallFieldTask_Waterfall(ctx->taskManager, playerDirection, partyPosition);
     return TRUE;
 }

@@ -180,7 +180,7 @@ typedef struct SearchTable {
 // Lives in the main binary so it survives the field unloading for menus and battles.
 static DexNavSearch sSearch;
 static Window sHud;
-static FieldSystem *sFieldSystem; // for the DexNav Pokétch app, which runs beside the field
+static FieldSystem *sFieldSystem; // for the DexNav Poketch app, which runs beside the field
 static BOOL sHudShown;
 
 static int Abs(int value) {
@@ -940,6 +940,10 @@ BOOL Gunk_FieldInputProcess(void *input, FieldSystem *fieldSystem) {
     sSearch.playerZ = (int)PlayerAvatar_GetZCoord(fieldSystem->playerAvatar);
 
     if (Tick(fieldSystem)) {
+        return TRUE;
+    }
+
+    if (GunkFollower_TryTalk(input, fieldSystem)) { // Gunk's Pokemon follower
         return TRUE;
     }
 

@@ -155,7 +155,7 @@ _021F1DE4:
 	mov r0, #0
 	pop {r3, pc}
 	.balign 4, 0
-_021F1DF4: .word ov05_021F9A9C
+_021F1DF4: .word GunkFollower_DetailsTable ; Gunk's: arm9 copy with the follower rows
 _021F1DF8: .word 0x0000FFFF
 
 	thumb_func_start ov05_021F1DFC

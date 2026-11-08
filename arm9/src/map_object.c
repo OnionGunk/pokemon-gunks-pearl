@@ -8,7 +8,7 @@
 #include "heap.h"
 
 extern UnkLMOCallbackStruct *UNK_020F6364[56]; // Gunk's: + movement 55, the Pokemon follower (gunk_follower.c)
-extern UnkLMOCallbackStruct3 ov05_021F9494[210];
+extern UnkLMOCallbackStruct3 GunkFollower_RendererTable[]; // Gunk's: arm9 copy of ov05_021F9494 with the follower rows
 
 static MapObjectManager *MapObjectManager_New(u32 objectCount);
 static LocalMapObject *MapObject_CreateFromObjectEvent(MapObjectManager *manager, ObjectEvent *objectEvent, u32 mapNo);
@@ -141,6 +141,7 @@ extern void sub_02058EE8(LocalMapObject *object);
 extern void ov05_021F2E0C(LocalMapObject *object, BOOL set);
 extern void sub_02058EF8(LocalMapObject *object);
 extern void ov05_021F1D8C(LocalMapObject *object);
+extern void GunkFollower_ObjectDrawUpdate(LocalMapObject *object);
 extern BOOL sub_0205C334(void);
 extern u32 sub_0205C340(LocalMapObject *object);
 extern void sub_02059C60(LocalMapObject *object);
@@ -874,7 +875,7 @@ static void sub_0205832C(SysTask *task, LocalMapObject *object) {
 
 static void sub_02058348(LocalMapObject *object) {
     if (sub_020587E0(MapObject_GetManager(object)) == TRUE) {
-        ov05_021F1D8C(object);
+        GunkFollower_ObjectDrawUpdate(object); // Gunk's: wraps ov05_021F1D8C (the follower animates while paused)
     }
 }
 
@@ -1914,7 +1915,7 @@ static LocalMapObject_UnkCallback sub_02058D48(UnkLMOCallbackStruct2 *callbackSt
 }
 
 static UnkLMOCallbackStruct2 *sub_02058D4C(u32 spriteId) {
-    UnkLMOCallbackStruct3 *array = ov05_021F9494;
+    UnkLMOCallbackStruct3 *array = GunkFollower_RendererTable;
     do {
         if (array[0].spriteId == spriteId) {
             return array[0].callbackStruct;

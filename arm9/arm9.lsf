@@ -621,6 +621,8 @@ Static arm9
     Object gunk_summary.o
     Object gunk_qol.o
     Object gunk_follower.o
+    Object gunk_follower_render.o
+    Object gunk_follower_tables.o
 }
 
 Autoload ITCM
@@ -765,7 +767,6 @@ Overlay OVERLAY_05
     Object ov05_021F61DC.o
     Object ov05_021F61F4.o
     Object ov05_021F6360.o
-    Object gunk_follower_render.o
 }
 
 Overlay OVERLAY_06

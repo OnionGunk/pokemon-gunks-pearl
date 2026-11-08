@@ -190,7 +190,7 @@ _021E763C:
 	add r1, sp, #0x14
 	bl sub_02058BB4
 	add r0, r4, #0
-	bl ov05_021F1D8C
+	bl GunkFollower_ObjectDrawUpdate ; Gunk's: wraps ov05_021F1D8C (the follower animates while paused)
 	ldr r0, _021E774C ; =0x0000064F
 	bl PlaySE
 	mov r0, #1

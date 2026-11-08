@@ -8,7 +8,7 @@
 // Gunk's Pokemon follower, stage 1 (C:\Projects\diamond-tools\notes\followers_plan.md):
 // the party lead walks behind the player, drawn with HeartGold's overworld sprite of that Pokemon.
 // - One ordinary map object: local ID 0xFD, movement type 55 (GunkFollower_Movement), graphics ID
-//   0x200 + HeartGold follower index (tables in overlays/05/asm/gunk_follower/*.inc, gen_tables.py).
+//   0x200 + HeartGold follower index (arm9 copies of overlay 5's graphics tables in asm/gunk_follower_tables.s, rows from gen_tables.py).
 // - It is a map object like any other, so it is saved and restored with the map's objects (no save change).
 
 #define GUNK_FOLLOWER_LOCAL_ID 0xFD
@@ -28,6 +28,15 @@ void GunkFollower_OnObjectsCreated(FieldSystem *fieldSystem);
 // Every overworld input frame (Gunk_FieldInputUpdate): spawns the follower once the party has a lead,
 // switches its sprite when the lead changes, removes it when there's no lead or on excluded maps.
 void GunkFollower_FieldUpdate(FieldSystem *fieldSystem);
+
+// ScrCmd_Surf / RockClimb / Waterfall, before their field task: removes the follower (it comes back on foot).
+void GunkFollower_OnFieldMove(FieldSystem *fieldSystem);
+
+// Its graphics update while it is paused with the other objects (GunkFollower_ObjectDrawUpdate): hides it on a warp tile.
+void GunkFollower_WhilePaused(LocalMapObject *object);
+
+// Gunk_FieldInputProcess, before the vanilla input: A on the follower plays its cry and shows a short line.
+BOOL GunkFollower_TryTalk(void *input, FieldSystem *fieldSystem);
 
 // Wraps the object-at-tile collision check (vanilla now sub_0205995C_Vanilla): the player never collides with
 // the follower.

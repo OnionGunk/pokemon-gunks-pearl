@@ -61,8 +61,9 @@ extern void sub_0202BEA0(void *);
 extern void sub_0202C0E4(void *);
 
 const struct SaveChunkHeader UNK_020EE6E0[] = {
-    { 0, 32, (SAVSIZEFN)Save_HOF_sizeof, (SAVINITFN)Save_HOF_Init },
-    { 1, 35, (SAVSIZEFN)sub_0202AC20,    (SAVINITFN)sub_0202AC28  }
+    // Gunk's: vanilla pages 32 and 35, moved past the larger main slot (Hall of Fame 3 pages, the other 2)
+    { 0, SAVE_EXTRA_FIRST_PAGE + 0, (SAVSIZEFN)Save_HOF_sizeof, (SAVINITFN)Save_HOF_Init },
+    { 1, SAVE_EXTRA_FIRST_PAGE + 3, (SAVSIZEFN)sub_0202AC20,    (SAVINITFN)sub_0202AC28  }
 };
 
 const struct SaveChunkHeader UNK_020EE700[] = {

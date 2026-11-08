@@ -64,8 +64,8 @@ _021D8158: .word 0xFFFFFDFF
 _021D815C: .word 0xFFFFFBFF
 _021D8160: .word 0xFFFFF7FF
 
-	thumb_func_start ov05_021D8164
-ov05_021D8164: ; 0x021D8164
+	thumb_func_start ov05_021D8164_Vanilla
+ov05_021D8164_Vanilla: ; 0x021D8164
 	push {r3, r4, r5, r6, r7, lr}
 	sub sp, #8
 	add r7, r1, #0
@@ -294,8 +294,8 @@ _021D8314:
 	nop
 _021D831C: .word 0x00000156
 
-	thumb_func_start ov05_021D8320
-ov05_021D8320: ; 0x021D8320
+	thumb_func_start ov05_021D8320_Vanilla
+ov05_021D8320_Vanilla: ; 0x021D8320
 	push {r3, r4, r5, r6, r7, lr}
 	sub sp, #8
 	add r5, r0, #0
@@ -409,7 +409,7 @@ _021D840E:
 	lsr r0, r0, #0x1f
 	beq _021D8436
 	add r0, r4, #0
-	bl ov05_021D8954
+	bl Gunk_FieldStepEncounter
 	cmp r0, #0
 	beq _021D8426
 	add sp, #8

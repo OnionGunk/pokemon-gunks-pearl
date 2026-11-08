@@ -395,7 +395,7 @@ _020375B4:
 	add r1, r4, #0x0
 	lsr r2, r2, #0x10
 	lsr r3, r3, #0x10
-	bl ov05_021D8164
+	bl Gunk_FieldInputUpdate
 _020375D4:
 	ldr r0, [r4, #0x1c]
 	ldr r2, [r4, #0x6c]
@@ -533,7 +533,7 @@ _020376E2:
 	beq _02037754
 	add r0, sp, #0x8
 	add r1, r4, #0x0
-	bl ov05_021D8320
+	bl Gunk_FieldInputProcess
 	cmp r0, #0x1
 	bne _0203771C
 	ldr r0, [r4, #0x4]

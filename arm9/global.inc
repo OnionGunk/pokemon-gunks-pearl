@@ -9358,3 +9358,9 @@
 .extern wcschr
 .extern wcscpy
 .extern wmemchr
+
+; Gunk's hooks
+.extern Gunk_FieldInputUpdate
+.extern Gunk_FieldInputProcess
+.extern Gunk_FieldStepEncounter
+.extern Gunk_FieldExit

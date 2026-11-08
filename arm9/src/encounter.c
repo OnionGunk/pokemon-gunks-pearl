@@ -2,6 +2,8 @@
 
 #include "global.h"
 
+#include "gunk/gunk_dexnav.h"
+
 #include "constants/battle.h"
 #include "constants/game_stats.h"
 
@@ -334,6 +336,8 @@ static void WildEncounter_Delete(WildEncounter *encounter) {
 void sub_020469B8(FieldSystem *fieldSystem, BattleSetup *setup) {
     SaveVarsFlags *flags = Save_VarsFlags_Get(fieldSystem->saveData);
 
+    GunkDexNav_OnWildEncounter(setup);
+
     if (Save_VarsFlags_CheckSafariSysFlag(flags)) {
         Encounter *encounter = Encounter_New(setup, sub_020475A0(setup), sub_020475B0(setup), NULL);
         FieldSystem_CreateTask(fieldSystem, Task_SafariEncounter, encounter);
@@ -345,6 +349,8 @@ void sub_020469B8(FieldSystem *fieldSystem, BattleSetup *setup) {
 
 void sub_02046A20(FieldSystem *fieldSystem, TaskManager *taskManager, BattleSetup *setup) {
     SaveVarsFlags *flags = Save_VarsFlags_Get(fieldSystem->saveData);
+
+    GunkDexNav_OnWildEncounter(setup);
 
     if (Save_VarsFlags_CheckSafariSysFlag(flags)) {
         Encounter *encounter = Encounter_New(setup, sub_020475A0(setup), sub_020475B0(setup), NULL);
@@ -377,6 +383,7 @@ static BOOL Task_WildEncounter(TaskManager *taskManager) {
     case 3:
         sub_020465E4(encounter->setup, fieldSystem);
         sub_02061080(fieldSystem, encounter->setup->unk134, encounter->setup->winFlag);
+        GunkDexNav_OnBattleEnd(encounter->setup->winFlag);
 
         if (IsBattleResultWin(encounter->setup->winFlag) == FALSE) {
             WildEncounter_Delete(encounter);

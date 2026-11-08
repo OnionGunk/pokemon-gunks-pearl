@@ -6,6 +6,10 @@
 #include "play_timer.h"
 #include "unk_0205FA2C.h"
 
+#include "gunk/gunk_test.h"
+
+FS_EXTERN_OVERLAY(OVERLAY_52);
+
 extern struct OverlayManagerTemplate UNK_020FD144;
 extern struct OverlayManagerTemplate UNK_020F2B7C;
 extern struct OverlayManagerTemplate UNK_020F2B8C;
@@ -297,7 +301,12 @@ BOOL ov52_021D750C(struct OverlayManager *manager, u32 *status) {
 #pragma unused(manager)
 #pragma unused(status)
     Heap_Destroy(HEAP_ID_77);
-    RegisterMainOverlay(SDK_OVERLAY_INVALID_ID, &UNK_020FD144);
+    // test builds can skip the intro straight to the first field (the step the intro would run next)
+    if (Gunk_TestSkipIntro()) {
+        RegisterMainOverlay(FS_OVERLAY_ID(OVERLAY_52), &ov52_021D76D8);
+    } else {
+        RegisterMainOverlay(SDK_OVERLAY_INVALID_ID, &UNK_020FD144);
+    }
 
     return TRUE;
 }
@@ -410,4 +419,5 @@ void ov52_021D769C(u32 unused, struct SaveData *save) {
     PlayerProfile *playerProfile = Save_PlayerData_GetProfile(save);
     PlayerProfile_SetMoney(playerProfile, 3000);
     sub_0205ECD4(Save_VarsFlags_Get(save));
+    Gunk_TestNewGame(save);
 }

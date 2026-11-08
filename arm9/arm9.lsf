@@ -612,6 +612,8 @@ Static arm9
     Object RUNTIME_CPLUS_StaticInitializers.o
     Object RUNTIME_NITRO_eabi_init.o
     Object gunk_save.o
+    Object gunk_dexnav.o
+    Object gunk_test.o
 }
 
 Autoload ITCM

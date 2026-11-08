@@ -63,3 +63,4 @@ ctx.c
 # Gunk's: free toolchain stand-ins (see tools/gunk/README.md)
 tools/metroskrew/
 build.log
+!tools/gunk/lcf/*.lcf.template

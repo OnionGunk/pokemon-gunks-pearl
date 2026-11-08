@@ -59,3 +59,7 @@ files/**/*.c
 
 #decomp.me helper files
 ctx.c
+
+# Gunk's: free toolchain stand-ins (see tools/gunk/README.md)
+tools/metroskrew/
+build.log

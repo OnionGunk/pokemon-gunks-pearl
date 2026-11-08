@@ -208,8 +208,8 @@ _021D76BA:
 	pop {r4, pc}
 	.balign 4, 0
 
-	thumb_func_start ov05_021D76C0
-ov05_021D76C0: ; 0x021D76C0
+	thumb_func_start ov05_021D76C0_Vanilla
+ov05_021D76C0_Vanilla: ; 0x021D76C0
 	push {r3, r4, r5, lr}
 	add r5, r1, #0
 	bl OverlayManager_GetField18
@@ -1245,4 +1245,4 @@ ov05_021F64A0: ; 0x021F64A0
 
 	.global ov05_021F64C8
 ov05_021F64C8: ; 0x021F64C8
-	.word ov05_021D7504, ov05_021D767C, ov05_021D76C0, 0xFFFFFFFF
+	.word ov05_021D7504, ov05_021D767C, Gunk_FieldExit, 0xFFFFFFFF

@@ -560,7 +560,7 @@ u32 SaveArray_sizeof(int idx) {
 void SaveData_InitSubstructs(struct SaveArrayHeader *headers) {
     const struct SaveChunkHeader *sch = UNK_020EE700;
     s32 offset = 0;
-    GF_ASSERT(UNK_020EE6DC == 36);
+    GF_ASSERT(UNK_020EE6DC == SAVE_BLOCK_NUM);
     for (int i = 0; i < UNK_020EE6DC; i++) {
         GF_ASSERT(i == sch[i].id);
         headers[i].id = sch[i].id;

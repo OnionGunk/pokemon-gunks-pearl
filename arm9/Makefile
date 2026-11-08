@@ -127,6 +127,10 @@ ASM_PROCESSOR := $(ASM_PROCESSOR_DIR)/compile.sh
 MWASFLAGS = -proc arm5te -g -i ../include -i .. -D$(GAME_VERSION) -D$(GAME_LANGUAGE)
 MWCFLAGS = -O4,p -sym on -gccext,on -proc arm946e -msgstyle gcc -gccinc -ipa file -fp soft -lang c99 -Cpp_exceptions off -inline on,noauto $(foreach dir,$(INCLUDE_DIRS),-i $(dir)) $(foreach dir,$(INCLUDE_RECURSIVE_DIRS),-ir $(dir)) -interworking -DFS_IMPLEMENT -enum int -D$(GAME_VERSION) -D$(GAME_LANGUAGE) -W all -W pedantic -W noimpl_signedunsigned -W noimplicitconv -W nounusedarg -W nomissingreturn -W error
 MWCXXFLAGS = -O4,p -sym on -proc arm946e -msgstyle gcc -gccinc -fp soft -lang c99 -Cpp_exceptions off -inline on,noauto $(foreach dir,$(INCLUDE_DIRS),-i $(dir)) $(foreach dir,$(INCLUDE_RECURSIVE_DIRS),-ir $(dir)) -interworking -DFS_IMPLEMENT -enum int -D$(GAME_VERSION) -D$(GAME_LANGUAGE) -W all -W pedantic -W noimpl_signedunsigned -W noimplicitconv -W nounusedarg -W nomissingreturn -W error
+# Gunk's: test builds (make GUNK_TEST=1) compile the emulator test hooks in src/gunk_test.c
+ifeq ($(GUNK_TEST),1)
+$(BUILD_DIR)/src/gunk_test.o: MWCFLAGS += -DGUNK_TEST
+endif
 MWLDFLAGS = -w off -sym on -proc v5te -interworking -map closure,unused -symtab sort -m _start -msgstyle gcc
 LIBS := -Llib -lsyscall
 ARFLAGS = rcS

@@ -9,7 +9,7 @@ SafariZone *Save_SafariZone_Get(struct SaveData *save) {
 }
 
 struct PCStorage *SaveArray_PCStorage_Get(struct SaveData *save) {
-    return SaveArray_Get(save, 35);
+    return SaveArray_Get(save, SAVE_PC_STORAGE);
 }
 
 struct UnkStruct_0202AC20 *sub_0202251C(struct SaveData *save) {

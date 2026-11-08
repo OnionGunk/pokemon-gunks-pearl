@@ -611,6 +611,9 @@ Static arm9
     Object RUNTIME_ARM_semihosted_console_io.o
     Object RUNTIME_CPLUS_StaticInitializers.o
     Object RUNTIME_NITRO_eabi_init.o
+    Object gunk_save.o
+    Object gunk_dexnav.o
+    Object gunk_test.o
     Object gunk_options.o
     Object gunk_battle.o
     Object gunk_registered_items.o
@@ -1347,4 +1350,11 @@ Overlay OVERLAY_86
 {
     After arm9
     Object overlay_86.o
+}
+
+Overlay OVERLAY_87
+{
+    ### Gunk's DexNav screen ###
+    After OVERLAY_14
+    Object gunk_dexnav_app.o
 }

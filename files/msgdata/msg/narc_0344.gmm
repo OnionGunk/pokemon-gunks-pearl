@@ -1860,4 +1860,16 @@
 		<attribute name="window_context_name">used</attribute>
 		<language name="English">SecretPotion</language>
 	</row>
+	<row id="narc_0344_00465" index="465">
+		<attribute name="window_context_name">used</attribute>
+		<language name="English">DexNav</language>
+	</row>
+	<row id="narc_0344_00466" index="466">
+		<attribute name="window_context_name">used</attribute>
+		<language name="English">Endless Repel</language>
+	</row>
+	<row id="narc_0344_00467" index="467">
+		<attribute name="window_context_name">used</attribute>
+		<language name="English">Exp. All</language>
+	</row>
 </body>

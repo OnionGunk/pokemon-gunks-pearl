@@ -120,5 +120,191 @@ def patch_common():
     print('narc_0205: patched (%d bytes)' % len(data))
 
 
+# ---- Move Tutor in every Pokemon Center (common script 2052 = script 53, messages 135-146) ----
+# Remembering is the Pastoria Move Reminder's flow without the Heart Scale; forgetting is the Canalave Move Deleter's.
+
+TUTOR = """
+L_GUNK_TUTOR:
+    PlayFanfare 0x5DC
+    LockAllEvents
+    FacePlayer
+    Unk002C 135
+    YesNoMenu 0x800C
+    CompareVarToValue 0x800C, 0
+    GoToIf 1, L_GUNK_TUTOR_REMEMBER
+    Unk002C 136
+    YesNoMenu 0x800C
+    CompareVarToValue 0x800C, 0
+    GoToIf 1, L_GUNK_TUTOR_FORGET
+    GoTo L_GUNK_TUTOR_BYE
+
+L_GUNK_TUTOR_REMEMBER:
+    Unk002C 137
+    CloseMessageBox
+    FadeScreen 6, 1, 0, 0
+    WaitFadeScreen
+    ChoosePokemonMenu
+    GetSelectedPartySlot 0x8005
+    RestoreOverworld
+    FadeScreen 6, 1, 1, 0
+    WaitFadeScreen
+    CompareVarToValue 0x8005, 0xFF
+    GoToIf 1, L_GUNK_TUTOR_BYE
+    GetPartyMonSpecies 0x8005, 0x800C
+    CompareVarToValue 0x800C, 0
+    GoToIf 1, L_GUNK_TUTOR_EGG
+    Unk021F 0x800C, 0x8005
+    CompareVarToValue 0x800C, 0
+    GoToIf 1, L_GUNK_TUTOR_NOTHING
+    Unk002C 138
+    CloseMessageBox
+    FadeScreen 6, 1, 0, 0
+    WaitFadeScreen
+    Unk0221 0x8005
+    Unk0223 0x800C
+    RestoreOverworld
+    FadeScreen 6, 1, 1, 0
+    WaitFadeScreen
+    GoTo L_GUNK_TUTOR_BYE
+
+L_GUNK_TUTOR_FORGET:
+    Unk002C 141
+    CloseMessageBox
+    FadeScreen 6, 1, 0, 0
+    WaitFadeScreen
+    ChoosePokemonMenu
+    GetSelectedPartySlot 0x8002
+    RestoreOverworld
+    FadeScreen 6, 1, 1, 0
+    WaitFadeScreen
+    CompareVarToValue 0x8002, 0xFF
+    GoToIf 1, L_GUNK_TUTOR_BYE
+    GetPartyMonSpecies 0x8002, 0x8001
+    CompareVarToValue 0x8001, 0
+    GoToIf 1, L_GUNK_TUTOR_EGG
+    CountPartyMonMoves 0x800C, 0x8002
+    CompareVarToValue 0x800C, 1
+    GoToIf 1, L_GUNK_TUTOR_ONE_MOVE
+    Unk002C 142
+    CloseMessageBox
+    FadeScreen 6, 1, 0, 0
+    WaitFadeScreen
+    Unk01C6 0x8002
+    Unk01C7 0x8001
+    RestoreOverworld
+    FadeScreen 6, 1, 1, 0
+    WaitFadeScreen
+    CompareVarToValue 0x8001, 0xFF
+    GoToIf 1, L_GUNK_TUTOR_BYE
+    GetPokemonMoveName 0, 0x8002, 0x8001
+    Unk002C 144
+    YesNoMenu 0x800C
+    CompareVarToValue 0x800C, 0
+    GoToIf 0, L_GUNK_TUTOR_BYE
+    ForgetPartyMonMove 0x8002, 0x8001
+    Unk002C 145
+    PlaySound 0x48D
+    PlaySoundWait
+    GoTo L_GUNK_TUTOR_BYE
+
+L_GUNK_TUTOR_EGG:
+    Unk002C 140
+    GoTo L_GUNK_TUTOR_BYE
+
+L_GUNK_TUTOR_NOTHING:
+    Unk002C 139
+    GoTo L_GUNK_TUTOR_BYE
+
+L_GUNK_TUTOR_ONE_MOVE:
+    Unk002C 143
+
+L_GUNK_TUTOR_BYE:
+    Unk002C 146
+    WaitButton
+    CloseMessageBox
+    ReleaseAllEvents
+    End
+"""
+
+SCRIPT_MOVE_TUTOR = 2052
+
+# Pokemon Center 1F maps (include/constants/maps.h) and where the tutor stands (Gunk's Platinum: x 1, z 6)
+POKECENTER_1F_MAPS = [
+    'MAP_JUBLIFE_POKECENTER_1F', 'MAP_CANALAVE_POKECENTER_1F', 'MAP_OREBURGH_POKECENTER_1F',
+    'MAP_ETERNA_POKECENTER_1F', 'MAP_HEARTHOME_POKECENTER_1F', 'MAP_PASTORIA_POKECENTER_1F',
+    'MAP_VEILSTONE_POKECENTER_1F', 'MAP_SUNYSHORE_POKECENTER_1F', 'MAP_SNOWPOINT_POKECENTER_1F',
+    'MAP_POKEMON_LEAGUE_POKECENTER_1F', 'MAP_FIGHT_AREA_POKECENTER_1F', 'MAP_SANDGEM_POKECENTER_1F',
+    'MAP_FLOAROMA_POKECENTER_1F', 'MAP_SOLACEON_POKECENTER_1F', 'MAP_CELESTIC_POKECENTER_1F',
+    'MAP_SURVIVAL_AREA_POKECENTER_1F', 'MAP_RESORT_AREA_POKECENTER_1F',
+]
+TUTOR_X, TUTOR_Z = 1, 6
+TUTOR_POSITION = {'MAP_FLOAROMA_POKECENTER_1F': (1, 7)}  # (1, 6) is taken there, as in Platinum
+SPRITE_GENTLEMAN = 36
+MOVEMENT_STILL = 0
+FACING_EAST = 3
+
+
+def patch_tutor_script():
+    path = os.path.join(SCRIPTS, 'narc_0205.bin')
+    text = dpscript.disasm(open(path, 'rb').read())
+    if 'Unk0221' in text:
+        print('narc_0205: Move Tutor already patched')
+        return
+    assert '; script 52' in text and '; script 53' not in text
+    text = text.replace('.endscripts', '.script L_GUNK_TUTOR ; 53\n.endscripts')
+    text = text.rstrip() + '\n' + TUTOR
+    data = dpscript.asm(text)
+    check = dpscript.disasm(data)
+    assert '; script 53' in check and 'Unk0221' in check, 'reassembled scripts lost the Move Tutor'
+    open(path, 'wb').write(data)
+    print('narc_0205: Move Tutor patched (%d bytes)' % len(data))
+
+
+def map_events_files():
+    """events bank of each Pokemon Center 1F, from arm9/src/map_header.c (rows are in map id order)"""
+    import re
+    maps = {}
+    for line in open(os.path.join(ROOT, 'include', 'constants', 'maps.h')):
+        m = re.match(r'#define (MAP_\w+)\s+(\d+)', line)
+        if m:
+            maps[m.group(1)] = int(m.group(2))
+    rows = [l for l in open(os.path.join(ROOT, 'arm9', 'src', 'map_header.c')) if l.strip().startswith('{ NARC_area_data')]
+    out = {}
+    for name in POKECENTER_1F_MAPS:
+        row = rows[maps[name]]
+        assert name.replace('_1F', '') in row, (name, row[-60:])
+        out[name] = int(re.search(r'zone_event_release_narc_(\d+)_bin', row).group(1))
+    return out
+
+
+def patch_tutor_events():
+    import struct
+    for name, n in map_events_files().items():
+        path = os.path.join(ROOT, 'files', 'fielddata', 'eventdata', 'zone_event_release', 'narc_%04d.bin' % n)
+        d = bytearray(open(path, 'rb').read())
+        o = 0
+        nbg = struct.unpack_from('<I', d, o)[0]
+        o += 4 + nbg * 0x14
+        nobj_at = o
+        nobj = struct.unpack_from('<I', d, o)[0]
+        o += 4
+        objs = [struct.unpack_from('<14Hi', d, o + 0x20 * i) for i in range(nobj)]
+        if any(obj[5] == SCRIPT_MOVE_TUTOR for obj in objs):
+            print('%s: Move Tutor already there' % name)
+            continue
+        x, z = TUTOR_POSITION.get(name, (TUTOR_X, TUTOR_Z))
+        assert not any(obj[12] == x and obj[13] == z for obj in objs), (name, 'tile taken')
+        local_id = max([obj[0] for obj in objs] + [-1]) + 1
+        tutor = struct.pack('<14Hi', local_id, SPRITE_GENTLEMAN, MOVEMENT_STILL, 0, 0, SCRIPT_MOVE_TUTOR, FACING_EAST,
+                            0, 0, 0, 0, 0, x, z, 0)
+        end_of_objs = o + 0x20 * nobj
+        d[end_of_objs:end_of_objs] = tutor
+        struct.pack_into('<I', d, nobj_at, nobj + 1)
+        open(path, 'wb').write(d)
+        print('%s (events %d): Move Tutor added as object %d' % (name, n, local_id))
+
+
 if __name__ == '__main__':
     patch_common()
+    patch_tutor_script()
+    patch_tutor_events()

@@ -40,8 +40,7 @@ REPEL_WORE_OFF_OLD = """L_12F4: ; script 33
 REPEL_WORE_OFF_NEW = f"""L_12F4: ; script 33
     PlayFanfare 0x5DC
     LockAllEvents
-    .hword {CMD_CHECK_REPEL_AGAIN}
-    .hword 0x800C
+    Gunk_CheckRepelAgain 0x800C
     CompareVarToValue 0x800C, 1
     GoToIf 1, L_GUNK_REPEL_ASK
     Unk002C 0x4F
@@ -60,7 +59,7 @@ L_GUNK_REPEL_ASK:
     End
 
 L_GUNK_REPEL_USE:
-    .hword {CMD_USE_REPEL_AGAIN}
+    Gunk_UseRepelAgain
     Unk002C 130
     WaitButtonAB
     CloseMessageBox
@@ -72,8 +71,7 @@ TOGGLES = f"""
 L_GUNK_ENDLESS_REPEL:
     PlayFanfare 0x5DC
     LockAllEvents
-    .hword {CMD_TOGGLE_ENDLESS_REPEL}
-    .hword 0x800C
+    Gunk_ToggleEndlessRepel 0x800C
     CompareVarToValue 0x800C, 1
     GoToIf 1, L_GUNK_ENDLESS_REPEL_ON
     Unk002C 132
@@ -86,8 +84,7 @@ L_GUNK_ENDLESS_REPEL_ON:
 L_GUNK_EXP_ALL:
     PlayFanfare 0x5DC
     LockAllEvents
-    .hword {CMD_TOGGLE_EXP_ALL}
-    .hword 0x800C
+    Gunk_ToggleExpAll 0x800C
     CompareVarToValue 0x800C, 1
     GoToIf 1, L_GUNK_EXP_ALL_ON
     Unk002C 134
@@ -107,7 +104,7 @@ L_GUNK_TOGGLE_END:
 def patch_common():
     path = os.path.join(SCRIPTS, 'narc_0205.bin')
     text = dpscript.disasm(open(path, 'rb').read())
-    if 'L_GUNK' in text or '.hword 721' in text:
+    if 'Gunk_CheckRepelAgain' in text:
         print('narc_0205: already patched')
         return
     assert text.count(REPEL_WORE_OFF_OLD) == 1, 'unexpected script 33'

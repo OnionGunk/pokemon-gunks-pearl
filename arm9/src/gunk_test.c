@@ -62,6 +62,10 @@ void Gunk_TestNewGame(struct SaveData *save) {
     // Master Balls for catching in the legality tests
     Bag_AddItem(Save_Bag_Get(save), ITEM_MASTER_BALL, 99, (enum HeapID)77);
     Bag_AddItem(Save_Bag_Get(save), ITEM_DEXNAV, 1, (enum HeapID)77);
+    // Pearl: QoL key items and Repels for the Repel prompt / Endless Repel / Exp. All tests
+    Bag_AddItem(Save_Bag_Get(save), ITEM_ENDLESS_REPEL, 1, (enum HeapID)77);
+    Bag_AddItem(Save_Bag_Get(save), ITEM_EXP_ALL, 1, (enum HeapID)77);
+    Bag_AddItem(Save_Bag_Get(save), ITEM_REPEL, 3, (enum HeapID)77);
 
     if (gGunkTestSpecies != 0) {
         struct Pokemon *mon = AllocMonZeroed((enum HeapID)77); // the new-game overlay's heap

@@ -1302,3 +1302,12 @@ CMDS = {0: {'name': 'ScrCmd_Nop', 'args': [], 'src': 'scrcmd.c', 'conditional': 
  718: {'name': 'ScrCmd_CapitalizeFirstChar', 'args': ['b'], 'src': 'scrcmd_names.c', 'conditional': False, 'notes': []},
  719: {'name': 'ScrCmd_Unk02CF', 'args': ['b'], 'src': 'scrcmd.c', 'conditional': False, 'notes': []},
  720: {'name': 'ScrCmd_Unk02D0', 'args': ['b'], 'src': 'scrcmd.c', 'conditional': False, 'notes': []}}
+
+# Gunk's script commands, appended to gScriptCmdTable (arm9/asm/unk_02038C78.s; C in arm9/src/gunk_qol.c).
+# Not generated: keep these when regenerating this file.
+CMDS.update({
+    721: {'name': 'ScrCmd_Gunk_CheckRepelAgain', 'args': ['p'], 'src': 'gunk_qol.c', 'conditional': False, 'notes': []},
+    722: {'name': 'ScrCmd_Gunk_UseRepelAgain', 'args': [], 'src': 'gunk_qol.c', 'conditional': False, 'notes': []},
+    723: {'name': 'ScrCmd_Gunk_ToggleEndlessRepel', 'args': ['p'], 'src': 'gunk_qol.c', 'conditional': False, 'notes': []},
+    724: {'name': 'ScrCmd_Gunk_ToggleExpAll', 'args': ['p'], 'src': 'gunk_qol.c', 'conditional': False, 'notes': []},
+})

@@ -29,6 +29,7 @@ u16 gGunkTestLocation[3];
 u16 gGunkTestSpecies;
 u16 gGunkTestLevel;
 u16 gGunkTestSeen;
+u16 gGunkTestPartner; // Pearl: a second party Pokemon (level 5), e.g. for Exp. All tests
 
 extern LocalFieldData *Save_LocalFieldData_Get(struct SaveData *save);
 
@@ -72,6 +73,19 @@ void Gunk_TestNewGame(struct SaveData *save) {
 
         ZeroMonData(mon);
         CreateMon(mon, gGunkTestSpecies, gGunkTestLevel ? gGunkTestLevel : 50, 32, FALSE, 0, 0, 0);
+        Party_AddMon(SaveArray_Party_Get(save), mon);
+        Pokedex_SetMonCaughtFlag(Save_Pokedex_Get(save), mon);
+        Heap_Free(mon);
+    }
+
+    // Pearl: the player has the Pokedex (catching without it leaves the registration screen stuck)
+    Pokedex_SetSinnohDexFlag(Save_Pokedex_Get(save));
+
+    if (gGunkTestPartner != 0) {
+        struct Pokemon *mon = AllocMonZeroed((enum HeapID)77);
+
+        ZeroMonData(mon);
+        CreateMon(mon, gGunkTestPartner, 5, 32, FALSE, 0, 0, 0);
         Party_AddMon(SaveArray_Party_Get(save), mon);
         Pokedex_SetMonCaughtFlag(Save_Pokedex_Get(save), mon);
         Heap_Free(mon);

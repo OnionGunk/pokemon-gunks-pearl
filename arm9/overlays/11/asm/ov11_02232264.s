@@ -1,5 +1,7 @@
 	.include "asm/macros.inc"
 	.include "global.inc"
+	.extern Gunk_ExpRecipientHoldEffect
+	.extern Gunk_ExpAllAmount
 	.section .text
 	.balign 4, 0
 
@@ -16986,7 +16988,8 @@ _0223A7D6:
 	lsr r0, r0, #0x10
 	mov r1, #1
 	mov r2, #5
-	bl GetItemAttr
+	add r3, r6, #0 ; Gunk: with Exp. All on, every party Pokemon gets EXP
+	bl Gunk_ExpRecipientHoldEffect
 	cmp r0, #0x32
 	beq _0223A81E
 	add r0, r5, #0
@@ -17143,7 +17146,9 @@ _0223A928:
 	mov r2, #0
 	bl GetMonData
 	cmp r0, #0x64
-	beq _0223AA34
+	bne _gunk_lv100_ok ; Gunk: beq out of range after the Exp. All hook
+	b _0223AA34
+_gunk_lv100_ok:
 	ldr r0, [r4, #4]
 	str r0, [sp, #0x20]
 	add r0, r5, #0
@@ -17172,6 +17177,10 @@ _0223A958:
 	add r0, r0, r1
 	str r0, [sp, #0x34]
 _0223A96C:
+	ldr r0, [sp, #0x34] ; Gunk: Exp. All gives a Pokemon that didn't battle half the EXP
+	ldr r1, [r4, #4]
+	bl Gunk_ExpAllAmount
+	str r0, [sp, #0x34]
 	ldr r0, [sp, #0x18]
 	cmp r0, #0x41
 	bne _0223A980

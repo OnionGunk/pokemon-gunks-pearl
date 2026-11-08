@@ -24,4 +24,9 @@ void Gunk_ExpAllBagUse(void *context, void *arg1);
 BOOL Gunk_ExpAllFieldUse(void *context);
 int Gunk_ToggleItemCheck(u32 *context);
 
+// Exp. All in battle (overlay 11's EXP task).
+struct Pokemon;
+u32 Gunk_ExpRecipientHoldEffect(u16 item, u32 attr, enum HeapID heapID, struct Pokemon *mon);
+u32 Gunk_ExpAllAmount(u32 exp, u8 *battleCtx);
+
 #endif // POKEDIAMOND_GUNK_QOL_H

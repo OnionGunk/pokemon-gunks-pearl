@@ -810,6 +810,7 @@ Overlay OVERLAY_11
     Object ov11_0225C91C.o
     Object ov11_0225D3EC.o
     Object ov11_0225D6A4.o
+    Object gunk_quick_run.o
 }
 
 Overlay OVERLAY_12

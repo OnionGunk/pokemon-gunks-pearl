@@ -12,6 +12,10 @@ Common scripts (narc_0205, ids 2000+, messages in msg bank 199):
   off), asks whether to use another (script commands 721/722, messages 129/130).
 - 2050 (script 51): Endless Repel switched on/off (command 723, messages 131/132).
 - 2051 (script 52): Exp. All switched on/off (command 724, messages 133/134).
+
+Route 202 (narc_0393, messages in msg bank 416), Dawn/Lucas's catching tutorial: after the five Poke Balls they
+also give the DexNav (item 465) and say how it works (messages 14 and 15). Before the first gym, as in Platinum.
+Run one part alone with `python3 tools/gunk/patch_scripts.py route202`.
 """
 import os
 import sys
@@ -123,5 +127,38 @@ def patch_common():
     print('narc_0205: patched (%d bytes)' % len(data))
 
 
+ITEM_DEXNAV = 465
+
+TUTORIAL_BALLS = """    SetVar 0x8004, 4
+    SetVar 0x8005, 5
+    RunScriptWait 0x7FC
+"""
+
+TUTORIAL_BALLS_AND_DEXNAV = TUTORIAL_BALLS + """    Unk002C 14
+    SetVar 0x8004, 465
+    SetVar 0x8005, 1
+    RunScriptWait 0x7FC
+    Unk002C 15
+"""
+
+
+def patch_route202():
+    path = os.path.join(SCRIPTS, 'narc_0393.bin')
+    text = dpscript.disasm(open(path, 'rb').read())
+    if 'Unk002C 0xF' in text or 'Unk002C 15' in text:
+        print('narc_0393: already patched')
+        return
+    assert text.count(TUTORIAL_BALLS) == 1, 'unexpected catching tutorial script'
+    text = text.replace(TUTORIAL_BALLS, TUTORIAL_BALLS_AND_DEXNAV)
+    data = dpscript.asm(text)
+    check = dpscript.disasm(data)
+    assert check.count('RunScriptWait 0x7FC') == 2 and ('Unk002C 0xF' in check or 'Unk002C 15' in check),         'reassembled script lost the gift'
+    open(path, 'wb').write(data)
+    print('narc_0393: patched (%d bytes)' % len(data))
+
+
+PARTS = {'common': lambda: patch_common(), 'route202': lambda: patch_route202()}
+
 if __name__ == '__main__':
-    patch_common()
+    for part in sys.argv[1:] or list(PARTS):
+        PARTS[part]()

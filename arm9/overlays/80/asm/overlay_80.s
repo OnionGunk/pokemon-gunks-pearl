@@ -1776,7 +1776,7 @@ ov80_0222E338: ; 0x0222E338
 	ldr r2, _0222E394 ; =0x00000FEC
 	add r1, r4, #0
 	strh r0, [r4, r2]
-	mov r3, #0x12
+	mov r3, #0x15
 	add r1, #0xb8
 	strh r3, [r1]
 	add r1, r2, #0
@@ -2445,7 +2445,7 @@ ov80_0222E87C: ; 0x0222E87C
 	add r0, r1, #2
 	strh r2, [r4, r0]
 	ldrh r0, [r4, r0]
-	cmp r0, #0x13
+	cmp r0, #0x16
 	bne _0222E8B0
 	mov r2, #0
 	add r0, r1, #2
@@ -9720,7 +9720,7 @@ _022323CE:
 	add r0, r5, #0
 	add r0, #0xb8
 	ldrh r0, [r0]
-	mov r1, #0x13
+	mov r1, #0x16
 	sub r2, #0x64
 	bl ov80_02232460
 	add r1, r5, #0
@@ -10454,7 +10454,7 @@ ov80_02232990: ; 0x02232990
 	add r0, r4, #0
 	add r0, #0xb8
 	ldrh r0, [r0]
-	cmp r0, #0x12
+	cmp r0, #0x15
 	beq _022329E6
 	ldr r0, [r4]
 	ldr r0, [r0, #8]
@@ -10958,7 +10958,7 @@ ov80_02232D7C: ; 0x02232D7C
 	ldr r0, [sp, #0x10]
 	cmp r0, #0
 	blt _02232E3A
-	cmp r0, #0x12
+	cmp r0, #0x15
 	bge _02232E3A
 	ldr r6, _02232F84 ; =0x00001004
 	mov r4, #0
@@ -11200,7 +11200,7 @@ _02232FA8: .word 0x00001014
 
 	thumb_func_start ov80_02232FAC
 ov80_02232FAC: ; 0x02232FAC
-	cmp r0, #0x12
+	cmp r0, #0x15
 	bne _02232FB4
 	mov r0, #1
 	bx lr
@@ -16061,7 +16061,7 @@ ov80_02235534: ; 0x02235534
 	add r0, #0xb8
 	ldrh r0, [r0]
 	add r6, r1, #0
-	cmp r0, #0x12
+	cmp r0, #0x15
 	beq _02235590
 	mov r0, #0x3e
 	bl AllocMonZeroed
@@ -16157,7 +16157,7 @@ ov80_022355F0: ; 0x022355F0
 	add r1, r4, #0
 	ldr r0, [r0, #0x20]
 	bl sub_0202C144
-	mov r0, #0x12
+	mov r0, #0x15
 	str r0, [sp, #0x20]
 	ldr r0, [r5]
 	ldr r0, [r0, #8]
@@ -16181,7 +16181,7 @@ _02235624:
 	bl ov80_02235754
 _02235640:
 	ldr r0, [sp, #0x20]
-	cmp r0, #0x12
+	cmp r0, #0x15
 	bne _02235664
 	ldr r0, [r5]
 	add r1, r4, #0
@@ -16191,7 +16191,7 @@ _02235640:
 	ldr r0, [r0, #8]
 	bl Party_GetCount
 	add r1, r5, #0
-	mov r2, #0x12
+	mov r2, #0x15
 	add r1, #0xcc
 	str r2, [r1]
 	sub r1, r0, #1
@@ -16242,7 +16242,7 @@ ov80_022356AC: ; 0x022356AC
 	add r4, r1, #0
 	ldr r0, [r0, #0x20]
 	bl sub_0202C144
-	mov r0, #0x12
+	mov r0, #0x15
 	str r0, [sp, #0x20]
 	ldr r0, [r5]
 	ldr r0, [r0, #8]
@@ -16260,7 +16260,7 @@ _022356D2:
 	add r2, sp, #0
 	bl SetMonData
 	ldr r0, [sp, #0x20]
-	cmp r0, #0x12
+	cmp r0, #0x15
 	bne _02235706
 	ldr r0, [r5]
 	add r1, r4, #0
@@ -16270,7 +16270,7 @@ _022356D2:
 	ldr r0, [r0, #8]
 	bl Party_GetCount
 	add r1, r5, #0
-	mov r2, #0x12
+	mov r2, #0x15
 	add r1, #0xcc
 	str r2, [r1]
 	sub r1, r0, #1
@@ -16403,8 +16403,9 @@ ov80_022357DC: ; 0x022357DC
 _022357FA:
 	ldr r0, _0223581C ; =0x00001008
 	ldrh r1, [r4, r0]
-	mov r0, #0x87
+	mov r0, #0x9d
 	lsl r0, r0, #2
+	add r0, #2 ; Gunk's: 30 * 21 boxes = 630 (0x276)
 	cmp r1, r0
 	bne _02235816
 	ldr r0, [r4]
@@ -16417,7 +16418,6 @@ _022357FA:
 _02235816:
 	mov r0, #0
 	pop {r4, pc}
-	nop
 _0223581C: .word 0x00001008
 	thumb_func_end ov80_022357DC
 
@@ -17711,7 +17711,7 @@ ov80_02236218: ; 0x02236218
 	add r0, r5, #0
 	add r0, #0xcc
 	ldr r0, [r0]
-	cmp r0, #0x12
+	cmp r0, #0x15
 	bne _02236248
 	ldr r0, [r5]
 	add r5, #0xd0

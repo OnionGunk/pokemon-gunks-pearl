@@ -282,6 +282,9 @@ files/fielddata/eventdata/zone_event_release.narc: $(wildcard files/fielddata/ev
 %.narc:
 	$(KNARC) -d $(basename $@)/ -p $@ -i
 
+# Gunk's: field scripts are patched in place (tools/gunk/patch_scripts.py); repack them when a file changes
+files/fielddata/script/scr_seq_release.narc: $(wildcard files/fielddata/script/scr_seq_release/*.bin)
+
 %.arc:
 	$(KNARC) -d $(basename $@)/ -p $@ -i
 

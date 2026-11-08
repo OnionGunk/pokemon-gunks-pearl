@@ -13511,7 +13511,7 @@ _02218DF2:
 	bne _02218E32
 	add r0, r4, #0
 	bl PCStorage_FindFirstBoxWithEmptySlot
-	cmp r0, #0x12
+	cmp r0, #0x15
 	bne _02218E32
 	ldr r0, [r5, #0x10]
 	ldr r2, [r5, #0x18]

@@ -30,3 +30,5 @@ head -c 16384 "$BASEROM" > tools/bin/rom_header.template.sbin
 echo "SDK stand-ins ready"
 cp tools/gunk/lcf/ARM9-TS.lcf.template arm9/
 cp tools/gunk/lcf/ARM7-TS.lcf.template arm7/
+# makelcf: build it from pret's NitroSDK subproject sources (tools/gunk/makelcf/build.sh) and copy it to tools/bin
+[ -x tools/bin/makelcf.exe ] || sh tools/gunk/makelcf/build.sh

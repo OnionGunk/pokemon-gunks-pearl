@@ -56,4 +56,12 @@
 		<attribute name="window_context_name">used</attribute>
 		<language name="English">Trainer Tips!\rAll Pokémon that are involved in\na battle earn Exp. Points!\rThe more your Pokémon battle,\nthe stronger they will become.</language>
 	</row>
+	<row id="narc_0416_00014" index="14">
+		<attribute name="window_context_name">used</attribute>
+		<language name="English">Oh, and the professor asked me to\ngive you this, too.\r</language>
+	</row>
+	<row id="narc_0416_00015" index="15">
+		<attribute name="window_context_name">used</attribute>
+		<language name="English">It’s a DexNav! It shows which\nPokémon live around here.\rChoose one you’ve seen, then press R\nin the tall grass to look for it!\r</language>
+	</row>
 </body>

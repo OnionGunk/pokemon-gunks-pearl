@@ -168,7 +168,7 @@ _020412E0:
 	add r7, #0x1e
 	add r0, r0, #0x1
 	str r0, [sp, #0x10]
-	cmp r0, #0x12
+	cmp r0, #0x15
 	blo _0204128E
 	ldr r0, [sp, #0x1c]
 	cmp r0, #0x0

@@ -325,4 +325,16 @@
 		<attribute name="window_context_name">used</attribute>
 		<language name="English">No</language>
 	</row>
+	<row id="narc_0014_00080" index="80">
+		<attribute name="window_context_name">used</attribute>
+		<language name="English">BOX 19</language>
+	</row>
+	<row id="narc_0014_00081" index="81">
+		<attribute name="window_context_name">used</attribute>
+		<language name="English">BOX 20</language>
+	</row>
+	<row id="narc_0014_00082" index="82">
+		<attribute name="window_context_name">used</attribute>
+		<language name="English">BOX 21</language>
+	</row>
 </body>

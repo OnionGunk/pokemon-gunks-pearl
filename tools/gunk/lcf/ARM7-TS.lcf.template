@@ -1,0 +1,177 @@
+#---------------------------------------------------------------------------
+#  ARM7 linker template for pokediamond, written by Gunk's to stand in for the
+#  Nitro SDK 3.2 ARM7-TS.lcf.template (makelcf syntax; see tools/gunk/README.md)
+#---------------------------------------------------------------------------
+MEMORY
+{
+    <STATIC.NAME>        (RWX) : ORIGIN = <STATIC.ADDRESS>,   LENGTH = 0x0 >  <STATIC.NAME><PROPERTY.SUFFIX>
+    <FOREACH.AUTOLOADS>
+    <AUTOLOAD.NAME>        (RWX) : ORIGIN = <AUTOLOAD.ADDRESS>, LENGTH = 0x0 >> <STATIC.NAME><PROPERTY.SUFFIX>
+    <END.AUTOLOADS>
+    binary.AUTOLOAD_INFO        (RWX) : ORIGIN = 0, LENGTH = 0x0 >> <STATIC.NAME><PROPERTY.SUFFIX>
+    <PROPERTY.OVERLAYDEFS>    (RW)  : ORIGIN = AFTER(<STATIC.NAME>), LENGTH = 0x0 > <PROPERTY.OVERLAYDEFS><PROPERTY.SUFFIX>
+    check.WORKRAM        (RWX) : ORIGIN = 0x037f8000, LENGTH = 0x18000 > workram.check
+}
+
+KEEP_SECTION
+{
+    .sinit
+}
+
+SECTIONS
+{
+    ############################ STATIC #################################
+    .<STATIC.NAME>:
+    {
+    ALIGNALL(4);            . = ALIGN(4);
+    SDK_STATIC_START        =.;
+    SDK_STATIC_TEXT_START        =.;
+                    crt0.o (.text)
+                    crt0.o (.rodata)
+                    * (.version)
+                    <FOREACH.STATIC.OBJECTS=.text>
+                    <STATIC.OBJECT=.text:t>
+                    <END.STATIC.OBJECTS>
+                    . = ALIGN(4);
+                    <FOREACH.STATIC.OBJECTS=.rodata>
+                    <STATIC.OBJECT=.rodata:t>
+                    <END.STATIC.OBJECTS>
+                    . = ALIGN(4);
+    SDK_STATIC_SINIT_START        =.;
+                    <FOREACH.STATIC.OBJECTS=.ctor>
+                    <STATIC.OBJECT=.ctor:t>
+                    <END.STATIC.OBJECTS>
+                    <FOREACH.STATIC.OBJECTS=.sinit>
+                    <STATIC.OBJECT=.sinit:t>
+                    <END.STATIC.OBJECTS>
+                    WRITEW    0;
+    SDK_STATIC_SINIT_END        =.;
+                    . = ALIGN(4);
+    SDK_STATIC_TEXT_END        =.;
+    SDK_STATIC_DATA_START        =.;
+                    <FOREACH.STATIC.OBJECTS=.sdata>
+                    <STATIC.OBJECT=.sdata:t>
+                    <END.STATIC.OBJECTS>
+                    . = ALIGN(4);
+                    <FOREACH.STATIC.OBJECTS=.data>
+                    <STATIC.OBJECT=.data:t>
+                    <END.STATIC.OBJECTS>
+                    . = ALIGN(4);
+    SDK_STATIC_DATA_END        =.;
+    SDK_STATIC_END            =.;
+
+    SDK_STATIC_TEXT_SIZE        = SDK_STATIC_TEXT_END - SDK_STATIC_TEXT_START;
+    SDK_STATIC_DATA_SIZE        = SDK_STATIC_DATA_END - SDK_STATIC_DATA_START;
+    SDK_STATIC_SIZE                = SDK_STATIC_END      - SDK_STATIC_START;
+    __sinit__                    = SDK_STATIC_SINIT_START;
+    } > <STATIC.NAME>
+
+    .<STATIC.NAME>.bss:
+    {
+    ALIGNALL(4);            . = ALIGN(4);
+    SDK_STATIC_BSS_START        =.;
+                    <FOREACH.STATIC.OBJECTS=.sbss>
+                    <STATIC.OBJECT=.sbss:t>
+                    <END.STATIC.OBJECTS>
+                    . = ALIGN(4);
+                    <FOREACH.STATIC.OBJECTS=.bss>
+                    <STATIC.OBJECT=.bss:t>
+                    <END.STATIC.OBJECTS>
+                    . = ALIGN(4);
+    SDK_STATIC_BSS_END        = .;
+    SDK_STATIC_BSS_SIZE        = SDK_STATIC_BSS_END - SDK_STATIC_BSS_START;
+    } >> <STATIC.NAME>
+
+    ############################ AUTOLOADS ##############################
+    SDK_AUTOLOAD_START            = SDK_STATIC_END;
+    SDK_AUTOLOAD_SIZE            = 0;
+    SDK_AUTOLOAD_NUMBER            = <NUMBER.AUTOLOADS>;
+
+<FOREACH.AUTOLOADS>
+    .<AUTOLOAD.NAME>:
+    {
+    ALIGNALL(4);                . = ALIGN(4);
+    SDK_AUTOLOAD_<AUTOLOAD.NAME>_ID        =<AUTOLOAD.ID>;
+    SDK_AUTOLOAD.<AUTOLOAD.NAME>.ID        =<AUTOLOAD.ID>;
+    SDK_AUTOLOAD.<AUTOLOAD.NAME>.START    =.;
+    SDK_AUTOLOAD.<AUTOLOAD.NAME>.TEXT_START    =.;
+                        <FOREACH.AUTOLOAD.OBJECTS=.text>
+                        <AUTOLOAD.OBJECT=.text:t>
+                        <END.AUTOLOAD.OBJECTS>
+                        . = ALIGN(4);
+                        <FOREACH.AUTOLOAD.OBJECTS=.rodata>
+                        <AUTOLOAD.OBJECT=.rodata:t>
+                        <END.AUTOLOAD.OBJECTS>
+                        . = ALIGN(4);
+    SDK_AUTOLOAD.<AUTOLOAD.NAME>.TEXT_END    =.;
+    SDK_AUTOLOAD.<AUTOLOAD.NAME>.DATA_START    =.;
+                        <FOREACH.AUTOLOAD.OBJECTS=.sdata>
+                        <AUTOLOAD.OBJECT=.sdata:t>
+                        <END.AUTOLOAD.OBJECTS>
+                        . = ALIGN(4);
+                        <FOREACH.AUTOLOAD.OBJECTS=.data>
+                        <AUTOLOAD.OBJECT=.data:t>
+                        <END.AUTOLOAD.OBJECTS>
+                        . = ALIGN(4);
+    SDK_AUTOLOAD.<AUTOLOAD.NAME>.DATA_END    =.;
+    SDK_AUTOLOAD.<AUTOLOAD.NAME>.END    =.;
+    SDK_AUTOLOAD.<AUTOLOAD.NAME>.TEXT_SIZE    = SDK_AUTOLOAD.<AUTOLOAD.NAME>.TEXT_END - SDK_AUTOLOAD.<AUTOLOAD.NAME>.TEXT_START;
+    SDK_AUTOLOAD.<AUTOLOAD.NAME>.DATA_SIZE    = SDK_AUTOLOAD.<AUTOLOAD.NAME>.DATA_END - SDK_AUTOLOAD.<AUTOLOAD.NAME>.DATA_START;
+    SDK_AUTOLOAD.<AUTOLOAD.NAME>.SIZE    = SDK_AUTOLOAD.<AUTOLOAD.NAME>.END    - SDK_AUTOLOAD.<AUTOLOAD.NAME>.START;
+    SDK_AUTOLOAD_SIZE            = SDK_AUTOLOAD_SIZE + SDK_AUTOLOAD.<AUTOLOAD.NAME>.SIZE;
+    } > <AUTOLOAD.NAME>
+
+    .<AUTOLOAD.NAME>.bss:
+    {
+    ALIGNALL(4);                . = ALIGN(4);
+    SDK_AUTOLOAD.<AUTOLOAD.NAME>.BSS_START    = .;
+                        <FOREACH.AUTOLOAD.OBJECTS=.sbss>
+                        <AUTOLOAD.OBJECT=.sbss:t>
+                        <END.AUTOLOAD.OBJECTS>
+                        . = ALIGN(4);
+                        <FOREACH.AUTOLOAD.OBJECTS=.bss>
+                        <AUTOLOAD.OBJECT=.bss:t>
+                        <END.AUTOLOAD.OBJECTS>
+                        . = ALIGN(4);
+    SDK_AUTOLOAD.<AUTOLOAD.NAME>.BSS_END    = .;
+    SDK_AUTOLOAD.<AUTOLOAD.NAME>.BSS_SIZE    = SDK_AUTOLOAD.<AUTOLOAD.NAME>.BSS_END - SDK_AUTOLOAD.<AUTOLOAD.NAME>.BSS_START;
+    } >> <AUTOLOAD.NAME>
+
+<END.AUTOLOADS>
+
+    SDK_SUBPRIV_ARENA_LO        = SDK_AUTOLOAD.MAIN.BSS_END;
+    SDK_WRAM_ARENA_LO            = SDK_AUTOLOAD.WRAM.BSS_END;
+
+    ############################ AUTOLOAD_INFO ##########################
+    .binary.AUTOLOAD_INFO:
+    {
+<FOREACH.AUTOLOADS>
+        WRITEW ADDR(.<AUTOLOAD.NAME>);
+        WRITEW SDK_AUTOLOAD.<AUTOLOAD.NAME>.SIZE;
+        WRITEW SDK_AUTOLOAD.<AUTOLOAD.NAME>.BSS_SIZE;
+<END.AUTOLOADS>
+    } > binary.AUTOLOAD_INFO
+
+    SDK_AUTOLOAD_LIST            = SDK_AUTOLOAD_START + SDK_AUTOLOAD_SIZE;
+    SDK_AUTOLOAD_LIST_END        = SDK_AUTOLOAD_START + SDK_AUTOLOAD_SIZE + SIZEOF(.binary.AUTOLOAD_INFO);
+    SDK_AUTOLOAD_SIZE            = SDK_AUTOLOAD_SIZE  + SIZEOF(.binary.AUTOLOAD_INFO);
+
+    ############################ STACK SIZES ############################
+    SDK_SYS_STACKSIZE            = <STATIC.STACKSIZE>;
+    SDK_IRQ_STACKSIZE            = <STATIC.IRQSTACKSIZE>;
+
+    ############################ OVERLAYDEFS ############################
+    .<PROPERTY.OVERLAYDEFS>:
+    {
+        WRITEW ADDR(.<STATIC.NAME>);
+        WRITEW _start;
+        WRITEW SDK_STATIC_SIZE + SDK_AUTOLOAD_SIZE;
+        WRITEW _start_AutoloadDoneCallback;
+    } > <PROPERTY.OVERLAYDEFS>
+
+    ############################ CHECK ##################################
+    .check.WORKRAM:
+    {
+        . = . + SDK_AUTOLOAD.WRAM.SIZE + SDK_AUTOLOAD.WRAM.BSS_SIZE;
+    } > check.WORKRAM
+}

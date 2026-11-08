@@ -16402,7 +16402,7 @@ ov11_0223A3B4: ; 0x0223A3B4
 	bne _0223A3E0
 	ldr r0, [r5, #0x64]
 	bl PCStorage_FindFirstBoxWithEmptySlot
-	cmp r0, #0x12
+	cmp r0, #0x15
 	beq _0223A3F0
 _0223A3E0:
 	ldr r0, _0223A3F4 ; =0x00002410

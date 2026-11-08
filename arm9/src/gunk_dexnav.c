@@ -503,7 +503,7 @@ static BOOL RollHiddenMon(FieldSystem *fieldSystem) {
     sSearch.shiny = FALSE;
 
     for (int i = 0; i < shinyRolls; i++) {
-        if (RandMod(DEXNAV_SHINY_ODDS) == 0) {
+        if (RandMod(DEXNAV_SHINY_ODDS) == 0 || Gunk_TestForceShiny()) {
             sSearch.shiny = TRUE;
             break;
         }

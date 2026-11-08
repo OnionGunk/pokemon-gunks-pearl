@@ -3,7 +3,7 @@
 
 #include "pokemon.h"
 
-#define NUM_BOXES              18u
+#define NUM_BOXES              21u // Gunk's: vanilla 18; a living dex through Sinnoh with three boxes spare
 #define MONS_PER_BOX           30u
 #define BOX_NAME_LENGTH        20u
 #define NUM_DEFAULT_WALLPAPERS 16u

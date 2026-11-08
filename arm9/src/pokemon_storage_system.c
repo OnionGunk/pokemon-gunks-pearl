@@ -36,7 +36,8 @@ void PCStorage_InitializeBoxes(struct PCStorage *pc) {
     struct MsgData *msgData = NewMsgDataFromNarc(MSGDATA_LOAD_LAZY, NARC_MSGDATA_MSG, NARC_msg_narc_0014_bin, HEAP_ID_DEFAULT);
     if (msgData != NULL) {
         for (i = 0; i < NUM_BOXES; i++) {
-            ReadMsgDataIntoU16Array(msgData, (u32)(i + 6), pc->names[i]);
+            // vanilla's 18 names are 6-23; the added boxes' names are at the end of the bank (80 on)
+            ReadMsgDataIntoU16Array(msgData, (u32)(i < 18 ? i + 6 : 80 + (i - 18)), pc->names[i]);
         }
         DestroyMsgData(msgData);
     }

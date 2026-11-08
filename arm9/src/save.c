@@ -316,16 +316,16 @@ int sub_02022AD8(struct SaveData *save) {
     u32 sp8;
     u32 sp4;
     {
-        u8 *r6 = Heap_AllocAtEnd(HEAP_ID_MAIN, 0x20000);
-        u8 *r4 = Heap_AllocAtEnd(HEAP_ID_MAIN, 0x20000);
-        if (FlashLoadChunk(0, r6, 0x20000)) {
+        u8 *r6 = Heap_AllocAtEnd(HEAP_ID_MAIN, SAVE_SLOT_SIZE);
+        u8 *r4 = Heap_AllocAtEnd(HEAP_ID_MAIN, SAVE_SLOT_SIZE);
+        if (FlashLoadChunk(0, r6, SAVE_SLOT_SIZE)) {
             sub_0202293C(&sp2C[0], save, r6, 0);
             sub_0202293C(&sp14[0], save, r6, 1);
         } else {
             sub_0202288C(&sp2C[0]);
             sub_0202288C(&sp14[0]);
         }
-        if (FlashLoadChunk(0x40000, r4, 0x20000)) {
+        if (FlashLoadChunk(0x40000, r4, SAVE_SLOT_SIZE)) {
             sub_0202293C(&sp2C[1], save, r4, 0);
             sub_0202293C(&sp14[1], save, r4, 1);
         } else {
@@ -573,7 +573,7 @@ void SaveData_InitSubstructs(struct SaveArrayHeader *headers) {
             offset += 20;
         }
     }
-    GF_ASSERT(offset <= 0x20000);
+    GF_ASSERT(offset <= SAVE_SLOT_SIZE);
 }
 
 void sub_02023160(struct SaveSlotSpec *spec, struct SaveArrayHeader *headers) {
@@ -596,12 +596,12 @@ void sub_02023160(struct SaveSlotSpec *spec, struct SaveArrayHeader *headers) {
         r12 += spec[i].size;
     }
     GF_ASSERT(spec[1].firstPage + spec[1].numPages == sp4);
-    GF_ASSERT(sp4 <= 32);
+    GF_ASSERT(sp4 <= SAVE_PAGE_MAX);
 }
 
 void Save_InitDynamicRegion_Internal(u8 *dynamic_region, struct SaveArrayHeader *headers) {
     const struct SaveChunkHeader *sch = UNK_020EE700;
-    MI_CpuClearFast(dynamic_region, 0x20000);
+    MI_CpuClearFast(dynamic_region, SAVE_SLOT_SIZE);
     for (int i = 0; i < UNK_020EE6DC; i++) {
         u32 offset = headers[i].offset;
         MI_CpuClearFast(dynamic_region + offset, headers[i].size);

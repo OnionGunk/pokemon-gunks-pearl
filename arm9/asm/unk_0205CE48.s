@@ -34,6 +34,8 @@ UNK_020F7260: ; 0x020F7260
 	.word sub_0205DA3C, 0x00000000, sub_0205DA80
 	.word sub_0205DACC, sub_0205DADC, sub_0205DAEC
 	.word GunkDexNav_ItemBagUse, GunkDexNav_ItemFieldUse, GunkDexNav_ItemCheck ; 23: Gunk's DexNav
+	.word Gunk_EndlessRepelBagUse, Gunk_EndlessRepelFieldUse, Gunk_ToggleItemCheck ; 24: Gunk's Endless Repel
+	.word Gunk_ExpAllBagUse, Gunk_ExpAllFieldUse, Gunk_ToggleItemCheck ; 25: Gunk's Exp. All
 
 	.text
 

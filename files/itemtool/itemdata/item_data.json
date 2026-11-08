@@ -16062,7 +16062,7 @@
       "selectable": 0,
       "pocket": "POCKET_KEY_ITEMS",
       "unk8_B": 0,
-      "unkA": 0,
+      "unkA": 24,
       "unkB": 0,
       "partyUse": 0,
       "partyUseParam": 0
@@ -16081,7 +16081,7 @@
       "selectable": 0,
       "pocket": "POCKET_KEY_ITEMS",
       "unk8_B": 0,
-      "unkA": 0,
+      "unkA": 25,
       "unkB": 0,
       "partyUse": 0,
       "partyUseParam": 0

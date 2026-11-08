@@ -1,5 +1,6 @@
 	.include "asm/macros.inc"
 	.include "global.inc"
+	.extern Gunk_BagUseRepel
 
 	.extern Gunk_BagTrySort
 	.extern Bag_IsItemRegistered
@@ -4976,7 +4977,8 @@ _021E9286:
 	lsl r1, r1, #0x18
 	add r0, r4, #0
 	lsr r1, r1, #0x18
-	bl ov75_021E6FEC
+	add r2, r5, #0 ; Gunk: remember the Repel for the "use another?" prompt
+	bl Gunk_BagUseRepel
 	ldr r0, _021E92B8 ; =0x00000488
 	mov r1, #1
 	strh r1, [r4, r0]

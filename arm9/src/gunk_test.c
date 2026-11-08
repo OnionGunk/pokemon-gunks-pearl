@@ -29,6 +29,13 @@ u16 gGunkTestLocation[3];
 u16 gGunkTestSpecies;
 u16 gGunkTestLevel;
 u16 gGunkTestSeen;
+u16 gGunkTestShiny; // 1: every DexNav search rolls the shiny path
+u16 gGunkTestBadges; // 1: all eight badges (Surf and the other field moves work)
+u16 gGunkTestMove;   // a move for the lead's first slot (57 = Surf)
+
+BOOL Gunk_TestForceShiny(void) {
+    return gGunkTestShiny != 0;
+}
 
 extern LocalFieldData *Save_LocalFieldData_Get(struct SaveData *save);
 
@@ -59,6 +66,12 @@ void Gunk_TestNewGame(struct SaveData *save) {
     location[3] = gGunkTestLocation[2];
     location[4] = 1;
 
+    if (gGunkTestBadges) {
+        for (int badge = 0; badge < 8; badge++) {
+            PlayerProfile_SetBadgeFlag(Save_PlayerData_GetProfile(save), (u32)badge);
+        }
+    }
+
     // Master Balls for catching in the legality tests
     Bag_AddItem(Save_Bag_Get(save), ITEM_MASTER_BALL, 99, (enum HeapID)77);
     Bag_AddItem(Save_Bag_Get(save), ITEM_DEXNAV, 1, (enum HeapID)77);
@@ -68,6 +81,12 @@ void Gunk_TestNewGame(struct SaveData *save) {
 
         ZeroMonData(mon);
         CreateMon(mon, gGunkTestSpecies, gGunkTestLevel ? gGunkTestLevel : 50, 32, FALSE, 0, 0, 0);
+
+        if (gGunkTestMove != 0) {
+            u32 move = gGunkTestMove;
+            SetMonData(mon, MON_DATA_MOVE1, &move);
+        }
+
         Party_AddMon(SaveArray_Party_Get(save), mon);
         Pokedex_SetMonCaughtFlag(Save_Pokedex_Get(save), mon);
         Heap_Free(mon);
@@ -93,6 +112,10 @@ BOOL Gunk_TestDexNavKeys(FieldSystem *fieldSystem) {
     return FALSE;
 }
 #else
+BOOL Gunk_TestForceShiny(void) {
+    return FALSE;
+}
+
 BOOL Gunk_TestDexNavKeys(FieldSystem *fieldSystem) {
 #pragma unused(fieldSystem)
     return FALSE;

@@ -5,6 +5,7 @@
 #include "field_system.h"
 #include "itemtool.h"
 #include "message_format.h"
+#include "pokemon.h"
 #include "save.h"
 #include "gunk/gunk_save.h"
 #include "gunk/qol.h"
@@ -119,4 +120,33 @@ BOOL Gunk_ExpAllFieldUse(void *context) {
 int Gunk_ToggleItemCheck(u32 *context) {
 #pragma unused(context)
     return 0;
+}
+
+// ---- Exp. All, battle side (overlay 11's EXP task, ov11_0223A79C) ----
+
+
+#define BATTLE_CTX_EXP_PER_MON   0x9C // EXP for each Pokémon that battled
+
+// The task picks each party Pokémon that battled or holds an Exp. Share; with Exp. All on, every Pokémon is picked
+// (fainted ones and level 100s are skipped later by the task itself).
+u32 Gunk_ExpRecipientHoldEffect(u16 item, u32 attr, enum HeapID heapID, struct Pokemon *mon) {
+    u32 holdEffect = GetItemAttr(item, attr, heapID);
+
+    if (holdEffect != HOLD_EFFECT_EXP_SHARE && GunkSave_IsExpAllOn(Save()) && !GetMonData(mon, MON_DATA_IS_EGG, NULL)) {
+        return HOLD_EFFECT_EXP_SHARE;
+    }
+
+    return holdEffect;
+}
+
+// A picked Pokémon that didn't battle and holds no Exp. Share would get 0: with Exp. All on it gets half.
+u32 Gunk_ExpAllAmount(u32 exp, u8 *battleCtx) {
+    if (exp == 0 && GunkSave_IsExpAllOn(Save())) {
+        exp = *(u32 *)(battleCtx + BATTLE_CTX_EXP_PER_MON) / 2;
+        if (exp == 0) {
+            exp = 1;
+        }
+    }
+
+    return exp;
 }

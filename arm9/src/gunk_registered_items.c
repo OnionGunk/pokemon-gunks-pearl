@@ -9,18 +9,22 @@
 static BOOL sUseSecond;
 static u16 sLastUsed;
 
-BOOL Gunk_FieldRegisteredItemButton(u32 newKeys) {
-    if (newKeys & PAD_BUTTON_Y) {
+#define FIELD_INPUT_REGISTERED_ITEM 0x8 // the field input bit Y sets (ov05_021D8164)
+
+// After the vanilla field input (ov05_021D8164) has run: Select also uses a registered item, under the same
+// condition as Y (standing still or a step just finished). Overlay 5 itself is left byte-identical: growing it
+// shifts the overlays placed after it and breaks the catch screens.
+void Gunk_FieldRegisteredItemInput(u16 *input, u16 pressedKeys, u32 moveState) {
+    if (moveState != 0 && moveState != 3) {
+        return;
+    }
+
+    if (pressedKeys & PAD_BUTTON_Y) {
         sUseSecond = FALSE;
-        return TRUE;
-    }
-
-    if (newKeys & PAD_BUTTON_SELECT) {
+    } else if (pressedKeys & PAD_BUTTON_SELECT) {
         sUseSecond = TRUE;
-        return TRUE;
+        *input |= FIELD_INPUT_REGISTERED_ITEM;
     }
-
-    return FALSE;
 }
 
 u32 Gunk_RegisteredItemToUse(Bag *bag) {

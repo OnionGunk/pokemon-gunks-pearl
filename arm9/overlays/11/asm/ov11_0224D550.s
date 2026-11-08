@@ -2,6 +2,7 @@
 	.include "global.inc"
 
 	.extern Gunk_BattleMenuInput
+	.extern Gunk_BattlePrompt
 	.section .text
 	.balign 4, 0
 
@@ -6781,7 +6782,7 @@ _02250BF0:
 	add r1, r5, #0
 	add r2, sp, #0x10
 	mov r3, #0
-	bl ov11_0223178C
+	bl Gunk_BattlePrompt ; Gunk: Quick Ball line under "What will X do?"
 	mov r0, #3
 	add sp, #0x4c
 	strb r0, [r4, #0xa]
@@ -7352,7 +7353,7 @@ _022510A4:
 	strh r2, [r0, #0x16]
 	ldr r0, [r4]
 	add r2, sp, #0x18
-	bl ov11_0223178C
+	bl Gunk_BattlePrompt ; Gunk: Quick Ball line (back from the move menu)
 	add r0, r7, #0
 	bl ov11_02258E30
 	add r5, sp, #4

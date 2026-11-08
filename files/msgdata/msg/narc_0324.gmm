@@ -5050,4 +5050,68 @@
 		<attribute name="window_context_name">used</attribute>
 		<language name="English">The foe’s {STRVAR_1 1, 0}’s\n{STRVAR_1 6, 1} wore off!</language>
 	</row>
+	<row id="narc_0324_01260" index="1260">
+		<attribute name="window_context_name">used</attribute>
+		<language name="English">What will {STRVAR_1 1, 0} do?\nL: Master Ball x{STRVAR_1 51, 1}{YESNO 0}</language>
+	</row>
+	<row id="narc_0324_01261" index="1261">
+		<attribute name="window_context_name">used</attribute>
+		<language name="English">What will {STRVAR_1 1, 0} do?\nL: Ultra Ball x{STRVAR_1 51, 1}{YESNO 0}</language>
+	</row>
+	<row id="narc_0324_01262" index="1262">
+		<attribute name="window_context_name">used</attribute>
+		<language name="English">What will {STRVAR_1 1, 0} do?\nL: Great Ball x{STRVAR_1 51, 1}{YESNO 0}</language>
+	</row>
+	<row id="narc_0324_01263" index="1263">
+		<attribute name="window_context_name">used</attribute>
+		<language name="English">What will {STRVAR_1 1, 0} do?\nL: Poké Ball x{STRVAR_1 51, 1}{YESNO 0}</language>
+	</row>
+	<row id="narc_0324_01264" index="1264">
+		<attribute name="window_context_name">used</attribute>
+		<language name="English">What will {STRVAR_1 1, 0} do?\nL: Safari Ball x{STRVAR_1 51, 1}{YESNO 0}</language>
+	</row>
+	<row id="narc_0324_01265" index="1265">
+		<attribute name="window_context_name">used</attribute>
+		<language name="English">What will {STRVAR_1 1, 0} do?\nL: Net Ball x{STRVAR_1 51, 1}{YESNO 0}</language>
+	</row>
+	<row id="narc_0324_01266" index="1266">
+		<attribute name="window_context_name">used</attribute>
+		<language name="English">What will {STRVAR_1 1, 0} do?\nL: Dive Ball x{STRVAR_1 51, 1}{YESNO 0}</language>
+	</row>
+	<row id="narc_0324_01267" index="1267">
+		<attribute name="window_context_name">used</attribute>
+		<language name="English">What will {STRVAR_1 1, 0} do?\nL: Nest Ball x{STRVAR_1 51, 1}{YESNO 0}</language>
+	</row>
+	<row id="narc_0324_01268" index="1268">
+		<attribute name="window_context_name">used</attribute>
+		<language name="English">What will {STRVAR_1 1, 0} do?\nL: Repeat Ball x{STRVAR_1 51, 1}{YESNO 0}</language>
+	</row>
+	<row id="narc_0324_01269" index="1269">
+		<attribute name="window_context_name">used</attribute>
+		<language name="English">What will {STRVAR_1 1, 0} do?\nL: Timer Ball x{STRVAR_1 51, 1}{YESNO 0}</language>
+	</row>
+	<row id="narc_0324_01270" index="1270">
+		<attribute name="window_context_name">used</attribute>
+		<language name="English">What will {STRVAR_1 1, 0} do?\nL: Luxury Ball x{STRVAR_1 51, 1}{YESNO 0}</language>
+	</row>
+	<row id="narc_0324_01271" index="1271">
+		<attribute name="window_context_name">used</attribute>
+		<language name="English">What will {STRVAR_1 1, 0} do?\nL: Premier Ball x{STRVAR_1 51, 1}{YESNO 0}</language>
+	</row>
+	<row id="narc_0324_01272" index="1272">
+		<attribute name="window_context_name">used</attribute>
+		<language name="English">What will {STRVAR_1 1, 0} do?\nL: Dusk Ball x{STRVAR_1 51, 1}{YESNO 0}</language>
+	</row>
+	<row id="narc_0324_01273" index="1273">
+		<attribute name="window_context_name">used</attribute>
+		<language name="English">What will {STRVAR_1 1, 0} do?\nL: Heal Ball x{STRVAR_1 51, 1}{YESNO 0}</language>
+	</row>
+	<row id="narc_0324_01274" index="1274">
+		<attribute name="window_context_name">used</attribute>
+		<language name="English">What will {STRVAR_1 1, 0} do?\nL: Quick Ball x{STRVAR_1 51, 1}{YESNO 0}</language>
+	</row>
+	<row id="narc_0324_01275" index="1275">
+		<attribute name="window_context_name">used</attribute>
+		<language name="English">What will {STRVAR_1 1, 0} do?\nL: Cherish Ball x{STRVAR_1 51, 1}{YESNO 0}</language>
+	</row>
 </body>

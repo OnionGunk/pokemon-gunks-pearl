@@ -274,6 +274,11 @@ endif
 
 HOSTFS_FILES := $(NITROFS_FILES:%=files/%)
 
+# Gunk's: these NARCs are packed from binaries edited by tools/gunk (field scripts, map events); make them
+# depend on their members so an edit repacks them
+files/fielddata/script/scr_seq_release.narc: $(wildcard files/fielddata/script/scr_seq_release/*.bin)
+files/fielddata/eventdata/zone_event_release.narc: $(wildcard files/fielddata/eventdata/zone_event_release/*.bin)
+
 %.narc:
 	$(KNARC) -d $(basename $@)/ -p $@ -i
 

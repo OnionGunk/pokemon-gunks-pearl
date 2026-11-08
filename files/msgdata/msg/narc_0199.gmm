@@ -553,4 +553,52 @@
 		<attribute name="window_context_name">used</attribute>
 		<language name="English">The Exp. All was turned off.</language>
 	</row>
+	<row id="narc_0199_00135" index="135">
+		<attribute name="window_context_name">used</attribute>
+		<language name="English">I’m the Move Tutor! For free, I can help\nyour Pokémon remember or forget moves.\rShall a Pokémon remember a move?</language>
+	</row>
+	<row id="narc_0199_00136" index="136">
+		<attribute name="window_context_name">used</attribute>
+		<language name="English">Then shall a Pokémon forget a move?</language>
+	</row>
+	<row id="narc_0199_00137" index="137">
+		<attribute name="window_context_name">used</attribute>
+		<language name="English">Which Pokémon should remember a move?\r</language>
+	</row>
+	<row id="narc_0199_00138" index="138">
+		<attribute name="window_context_name">used</attribute>
+		<language name="English">Which move should it remember?\r</language>
+	</row>
+	<row id="narc_0199_00139" index="139">
+		<attribute name="window_context_name">used</attribute>
+		<language name="English">That Pokémon has no moves\nto remember.\r</language>
+	</row>
+	<row id="narc_0199_00140" index="140">
+		<attribute name="window_context_name">used</attribute>
+		<language name="English">An Egg can’t remember or\nforget moves.\r</language>
+	</row>
+	<row id="narc_0199_00141" index="141">
+		<attribute name="window_context_name">used</attribute>
+		<language name="English">Which Pokémon should forget a move?\r</language>
+	</row>
+	<row id="narc_0199_00142" index="142">
+		<attribute name="window_context_name">used</attribute>
+		<language name="English">Which move should it forget?\r</language>
+	</row>
+	<row id="narc_0199_00143" index="143">
+		<attribute name="window_context_name">used</attribute>
+		<language name="English">That Pokémon knows only one move,\nso it can’t forget it.\r</language>
+	</row>
+	<row id="narc_0199_00144" index="144">
+		<attribute name="window_context_name">used</attribute>
+		<language name="English">The move {STRVAR_1 6, 0}?\nShould it be forgotten?</language>
+	</row>
+	<row id="narc_0199_00145" index="145">
+		<attribute name="window_context_name">used</attribute>
+		<language name="English">Done! Your Pokémon has forgotten\nthe move {STRVAR_1 6, 0}.\r</language>
+	</row>
+	<row id="narc_0199_00146" index="146">
+		<attribute name="window_context_name">used</attribute>
+		<language name="English">Come back any time!</language>
+	</row>
 </body>

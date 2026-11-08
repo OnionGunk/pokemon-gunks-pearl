@@ -58,6 +58,7 @@ extern void BattleSetup_InitFromFieldSystem(BattleSetup *setup, FieldSystem *fie
 extern void sub_020469B8(FieldSystem *fieldSystem, BattleSetup *setup);
 extern void ClearFrameAndWindow2(struct Window *window, BOOL param1);
 extern BOOL ov05_021D8320_Vanilla(void *input, FieldSystem *fieldSystem);
+extern void Gunk_FieldRegisteredItemInput(u16 *input, u16 pressedKeys, u32 moveState); // gunk_registered_items.c
 extern void ov05_021D8164_Vanilla(void *input, FieldSystem *fieldSystem, u16 pressedKeys, u16 heldKeys);
 extern BOOL ov05_021D8954(FieldSystem *fieldSystem);
 extern BOOL ov05_021D76C0_Vanilla(void *overlayManager, u32 *state);
@@ -928,6 +929,7 @@ void Gunk_FieldInputUpdate(void *input, FieldSystem *fieldSystem, u16 pressedKey
     ov05_021D8164_Vanilla(input, fieldSystem, pressedKeys, heldKeys);
     GunkFollower_FieldUpdate(fieldSystem); // Gunk's Pokemon follower
     moveState = PlayerAvatar_GetUnk14(fieldSystem->playerAvatar);
+    Gunk_FieldRegisteredItemInput((u16 *)input, pressedKeys, moveState); // Pearl: Select = second registered item
     // the same moment the game takes A, X and Y: standing still or a step just finished
     sSearch.rPressed = (pressedKeys & PAD_BUTTON_R) && (moveState == 0 || moveState == 3);
 }

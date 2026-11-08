@@ -31,6 +31,7 @@ u16 gGunkTestLocation[3];
 u16 gGunkTestSpecies;
 u16 gGunkTestLevel;
 u16 gGunkTestSeen;
+u16 gGunkTestPartner; // Pearl: a second party Pokemon (level 5), e.g. for Exp. All tests
 u16 gGunkTestShiny; // 1: every DexNav search rolls the shiny path
 u16 gGunkTestBadges; // 1: all eight badges (Surf and the other field moves work)
 u16 gGunkTestMove;   // a move for the lead's first slot (57 = Surf)
@@ -94,6 +95,11 @@ void Gunk_TestNewGame(struct SaveData *save) {
     // Master Balls for catching in the legality tests
     Bag_AddItem(Save_Bag_Get(save), ITEM_MASTER_BALL, 99, (enum HeapID)77);
     Bag_AddItem(Save_Bag_Get(save), ITEM_DEXNAV, 1, (enum HeapID)77);
+    // Pearl: QoL key items and Repels for the Repel prompt / Endless Repel / Exp. All tests
+    Bag_AddItem(Save_Bag_Get(save), ITEM_ENDLESS_REPEL, 1, (enum HeapID)77);
+    Bag_AddItem(Save_Bag_Get(save), ITEM_EXP_ALL, 1, (enum HeapID)77);
+    Bag_AddItem(Save_Bag_Get(save), ITEM_REPEL, 3, (enum HeapID)77);
+    Bag_AddItem(Save_Bag_Get(save), ITEM_POKE_BALL, 5, (enum HeapID)77); // Pearl: a second ball type for Quick Ball
 
     if (gGunkTestSpecies != 0) {
         struct Pokemon *mon = AllocMonZeroed((enum HeapID)77); // the new-game overlay's heap
@@ -106,6 +112,19 @@ void Gunk_TestNewGame(struct SaveData *save) {
             SetMonData(mon, MON_DATA_MOVE1, &move);
         }
 
+        Party_AddMon(SaveArray_Party_Get(save), mon);
+        Pokedex_SetMonCaughtFlag(Save_Pokedex_Get(save), mon);
+        Heap_Free(mon);
+    }
+
+    // Pearl: the player has the Pokedex (catching without it leaves the registration screen stuck)
+    Pokedex_SetSinnohDexFlag(Save_Pokedex_Get(save));
+
+    if (gGunkTestPartner != 0) {
+        struct Pokemon *mon = AllocMonZeroed((enum HeapID)77);
+
+        ZeroMonData(mon);
+        CreateMon(mon, gGunkTestPartner, 5, 32, FALSE, 0, 0, 0);
         Party_AddMon(SaveArray_Party_Get(save), mon);
         Pokedex_SetMonCaughtFlag(Save_Pokedex_Get(save), mon);
         Heap_Free(mon);

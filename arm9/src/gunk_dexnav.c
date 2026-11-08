@@ -1,7 +1,9 @@
 #include "global.h"
 
 #include "gunk/gunk_dexnav.h"
+#include "gunk/gunk_dexnav_app.h"
 #include "gunk/gunk_save.h"
+#include "gunk/gunk_test.h"
 
 #include "constants/battle.h"
 #include "constants/pokemon.h"
@@ -34,6 +36,9 @@
 #include "unk_0205EC84.h"
 
 #include "OS_tick.h"
+#include "unk_0204AF24.h"
+#include "overlay_manager.h"
+#include "poke_overlay.h"
 #include "PAD_pad.h"
 #include "string_util.h"
 #include "map_object.h"
@@ -119,6 +124,14 @@ typedef struct WildEncounterData {
     int dualSlot[5][2];
     int surfRate;
     WaterSlot surf[NUM_WATER_SLOTS];
+    int unusedRate;
+    WaterSlot unused[NUM_WATER_SLOTS];
+    int oldRodRate;
+    WaterSlot oldRod[NUM_WATER_SLOTS];
+    int goodRodRate;
+    WaterSlot goodRod[NUM_WATER_SLOTS];
+    int superRodRate;
+    WaterSlot superRod[NUM_WATER_SLOTS];
 } WildEncounterData;
 
 extern WildEncounterData *sub_02034CE0(FieldSystem *fieldSystem);
@@ -936,6 +949,11 @@ BOOL Gunk_FieldInputProcess(void *input, FieldSystem *fieldSystem) {
 
     sSearch.rPressed = FALSE;
     PlaySE(SEQ_SE_DP_WIN_OPEN);
+
+    if (Gunk_TestDexNavKeys(fieldSystem)) {
+        return TRUE;
+    }
+
     result = TryStartSearch(fieldSystem);
 
     if (result != SEARCH_STARTED) {
@@ -1044,4 +1062,146 @@ BOOL Gunk_FieldExit(void *overlayManager, u32 *state) {
     }
 
     return ov05_021D76C0_Vanilla(overlayManager, state);
+}
+
+// ---- the DexNav screen ----
+
+static void AddSlot(DexNavEntry *slots, int *count, int species, int method, int minLevel, int maxLevel) {
+    if (species == SPECIES_NONE) {
+        return;
+    }
+
+    for (int i = 0; i < *count; i++) {
+        if (slots[i].species == species) {
+            slots[i].minLevel = (u8)(minLevel < slots[i].minLevel ? minLevel : slots[i].minLevel);
+            slots[i].maxLevel = (u8)(maxLevel > slots[i].maxLevel ? maxLevel : slots[i].maxLevel);
+            return;
+        }
+    }
+
+    if (*count >= DEXNAV_SECTION_SLOTS) {
+        return;
+    }
+
+    slots[*count].species = (u16)species;
+    slots[*count].method = (u8)method;
+    slots[*count].minLevel = (u8)minLevel;
+    slots[*count].maxLevel = (u8)maxLevel;
+    (*count)++;
+}
+
+static int MinLevel(const WaterSlot *slot) {
+    return slot->minLevel < slot->maxLevel ? slot->minLevel : slot->maxLevel;
+}
+
+static int MaxLevel(const WaterSlot *slot) {
+    return slot->minLevel < slot->maxLevel ? slot->maxLevel : slot->minLevel;
+}
+
+// The land and water halves of the grid, from the current map's encounter table (surf before the rods, so a
+// species on both keeps "Surfing").
+void GunkDexNav_BuildAreaData(FieldSystem *fieldSystem, DexNavData *data) {
+    const WildEncounterData *encounters = sub_02034CE0(fieldSystem);
+    DexNavEntry *land = &data->slots[0];
+    DexNavEntry *water = &data->slots[DEXNAV_SECTION_SLOTS];
+    const WaterSlot *waterTables[4];
+    static const u8 sWaterMethods[4] = { DEXNAV_METHOD_SURF, DEXNAV_METHOD_OLD_ROD, DEXNAV_METHOD_GOOD_ROD, DEXNAV_METHOD_SUPER_ROD };
+    int numLand = 0, numWater = 0, i;
+    int grassMin = 100, grassMax = 0;
+
+    MI_CpuClear8(data->slots, sizeof(data->slots));
+    data->saveData = fieldSystem->saveData;
+
+    for (i = 0; i < NUM_GRASS_SLOTS; i++) {
+        const GrassSlot *slot = &encounters->grass[i];
+
+        if (slot->species != SPECIES_NONE) {
+            grassMin = slot->level < grassMin ? slot->level : grassMin;
+            grassMax = slot->level > grassMax ? slot->level : grassMax;
+        }
+
+        AddSlot(land, &numLand, slot->species, DEXNAV_METHOD_GRASS, slot->level, slot->level);
+    }
+
+    for (i = 0; i < 2; i++) {
+        AddSlot(land, &numLand, encounters->day[i], DEXNAV_METHOD_MORNING, grassMin, grassMax);
+        AddSlot(land, &numLand, encounters->night[i], DEXNAV_METHOD_NIGHT, grassMin, grassMax);
+    }
+
+    for (i = 0; i < 2; i++) {
+        AddSlot(land, &numLand, encounters->swarm[i], DEXNAV_METHOD_SWARM, grassMin, grassMax);
+    }
+
+    waterTables[0] = encounters->surf;
+    waterTables[1] = encounters->oldRod;
+    waterTables[2] = encounters->goodRod;
+    waterTables[3] = encounters->superRod;
+
+    for (int table = 0; table < 4; table++) {
+        for (i = 0; i < NUM_WATER_SLOTS; i++) {
+            const WaterSlot *slot = &waterTables[table][i];
+            AddSlot(water, &numWater, slot->species, sWaterMethods[table], MinLevel(slot), MaxLevel(slot));
+        }
+    }
+}
+
+FS_EXTERN_OVERLAY(OVERLAY_87);
+
+static const struct OverlayManagerTemplate sDexNavAppTemplate = {
+    GunkDexNavApp_Init,
+    GunkDexNavApp_Main,
+    GunkDexNavApp_Exit,
+    FS_OVERLAY_ID(OVERLAY_87),
+};
+
+extern void sub_0204AF3C(TaskManager *taskManager);
+extern void sub_02046500(TaskManager *taskManager, u32 template, u32 args);
+
+typedef struct DexNavScreenTask {
+    int state;
+    DexNavData data;
+} DexNavScreenTask;
+
+// Fade out, leave the field, run the DexNav screen, come back.
+static BOOL Task_DexNavScreen(TaskManager *taskManager) {
+    FieldSystem *fieldSystem = TaskManager_GetFieldSystem(taskManager);
+    DexNavScreenTask *task = TaskManager_GetEnvironment(taskManager);
+
+    switch (task->state) {
+    case 0:
+        MapObjectManager_PauseAllMovement(fieldSystem->mapObjectManager);
+        GunkDexNav_BuildAreaData(fieldSystem, &task->data);
+        CallTask_FadeToBlack(taskManager);
+        task->state++;
+        break;
+    case 1:
+        sub_0204AF3C(taskManager);
+        task->state++;
+        break;
+    case 2:
+        sub_02046500(taskManager, (u32)&sDexNavAppTemplate, (u32)&task->data);
+        task->state++;
+        break;
+    case 3:
+        CallTask_RestoreOverworld(taskManager);
+        task->state++;
+        break;
+    case 4:
+        CallTask_FadeFromBlack(taskManager);
+        task->state++;
+        break;
+    case 5:
+        MapObjectManager_UnpauseAllMovement(fieldSystem->mapObjectManager);
+        Heap_Free(task);
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
+void GunkDexNav_OpenScreen(FieldSystem *fieldSystem) {
+    DexNavScreenTask *task = Heap_Alloc(HEAP_ID_FIELD, sizeof(DexNavScreenTask));
+
+    MI_CpuClear8(task, sizeof(DexNavScreenTask));
+    FieldSystem_CreateTask(fieldSystem, Task_DexNavScreen, task);
 }

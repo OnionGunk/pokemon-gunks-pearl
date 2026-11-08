@@ -1344,3 +1344,10 @@ Overlay OVERLAY_86
     After arm9
     Object overlay_86.o
 }
+
+Overlay OVERLAY_87
+{
+    ### Gunk's DexNav screen ###
+    After OVERLAY_14
+    Object gunk_dexnav_app.o
+}

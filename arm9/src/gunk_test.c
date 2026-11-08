@@ -2,7 +2,13 @@
 
 #include "gunk/gunk_save.h"
 #include "gunk/gunk_test.h"
+#include "gunk/gunk_dexnav_app.h"
 
+#include "main.h"
+#include "PAD_pad.h"
+
+#include "bag.h"
+#include "constants/items.h"
 #include "field_system.h"
 #include "heap.h"
 #include "party.h"
@@ -53,6 +59,9 @@ void Gunk_TestNewGame(struct SaveData *save) {
     location[3] = gGunkTestLocation[2];
     location[4] = 1;
 
+    // Master Balls for catching in the legality tests
+    Bag_AddItem(Save_Bag_Get(save), ITEM_MASTER_BALL, 99, (enum HeapID)77);
+
     if (gGunkTestSpecies != 0) {
         struct Pokemon *mon = AllocMonZeroed((enum HeapID)77); // the new-game overlay's heap
 
@@ -73,7 +82,21 @@ void Gunk_TestNewGame(struct SaveData *save) {
         Heap_Free(mon);
     }
 }
+// L held with R opens the DexNav screen (in normal play the DexNav key item does)
+BOOL Gunk_TestDexNavKeys(FieldSystem *fieldSystem) {
+    if (gSystem.heldKeys & PAD_BUTTON_L) {
+        GunkDexNav_OpenScreen(fieldSystem);
+        return TRUE;
+    }
+
+    return FALSE;
+}
 #else
+BOOL Gunk_TestDexNavKeys(FieldSystem *fieldSystem) {
+#pragma unused(fieldSystem)
+    return FALSE;
+}
+
 BOOL Gunk_TestSkipIntro(void) {
     return FALSE;
 }

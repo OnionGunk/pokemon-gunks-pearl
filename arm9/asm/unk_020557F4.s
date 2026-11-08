@@ -3160,13 +3160,14 @@ _0205710E:
 
 	thumb_func_start sub_02057114
 sub_02057114: ; 0x02057114
+	; Gunk's auto-run: with the Running Shoes the player runs by default; holding B walks
 	mov r0, #0x2
 	tst r0, r1
 	beq _0205711E
-	mov r0, #0x1
+	mov r0, #0x0
 	bx lr
 _0205711E:
-	mov r0, #0x0
+	mov r0, #0x1
 	bx lr
 	.balign 4
 

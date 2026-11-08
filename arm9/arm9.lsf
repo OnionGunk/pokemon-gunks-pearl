@@ -611,6 +611,7 @@ Static arm9
     Object RUNTIME_ARM_semihosted_console_io.o
     Object RUNTIME_CPLUS_StaticInitializers.o
     Object RUNTIME_NITRO_eabi_init.o
+    Object gunk_options.o
 }
 
 Autoload ITCM

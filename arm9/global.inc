@@ -9364,6 +9364,15 @@
 .extern Gunk_FieldInputProcess
 .extern Gunk_FieldStepEncounter
 .extern Gunk_FieldExit
+.extern Gunk_EndlessRepelBagUse
+.extern Gunk_EndlessRepelFieldUse
+.extern Gunk_ExpAllBagUse
+.extern Gunk_ExpAllFieldUse
+.extern Gunk_ToggleItemCheck
+.extern Gunk_ScrCmd_CheckRepelAgain
+.extern Gunk_ScrCmd_UseRepelAgain
+.extern Gunk_ScrCmd_ToggleEndlessRepel
+.extern Gunk_ScrCmd_ToggleExpAll
 .extern GunkDexNav_ItemBagUse
 .extern GunkDexNav_ItemFieldUse
 .extern GunkDexNav_ItemCheck

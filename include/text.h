@@ -10,6 +10,9 @@
 
 #define TEXT_SPEED_INSTANT    0    // Transfers to VRAM
 #define TEXT_SPEED_NOTRANSFER 0xFF // Defers VRAM transfer
+// Gunk's: a printer task like the fastest speed that prints everything it can each frame, stopping at button
+// waits and scrolls (the INSTANT text-speed option)
+#define TEXT_SPEED_INSTANT_TASK 0xFE
 
 union StrbufForPrint {
     struct String *wrapped;
@@ -53,6 +56,7 @@ struct TextPrinter {
     u8 Unk29;            // used to be japanese, not sure about that anymore
     u16 Unk2A;
     u16 *Unk2C;
+    u8 instant; // Gunk's: INSTANT text speed
 };
 
 struct FontInfo {

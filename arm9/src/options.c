@@ -6,6 +6,7 @@
 #include "heap.h"
 #include "main.h"
 #include "player_data.h"
+#include "text.h"
 
 struct Options *Options_New(enum HeapID heapID) {
     struct Options *ret = Heap_Alloc(heapID, sizeof(struct Options));
@@ -20,7 +21,7 @@ void Options_Copy(struct Options *src, struct Options *dest) {
 void Options_Init(struct Options *options) {
     MI_CpuFill8(options, 0, sizeof(struct Options));
 
-    options->textSpeed = 1;   // mid speed
+    options->textSpeed = 2;   // Gunk's: new games start on fast text
     options->soundMethod = 0; // stereo
     options->battleStyle = 0; // shift
     options->battleScene = 0; // on
@@ -64,6 +65,11 @@ u32 Options_GetTextFrameDelay(struct Options *options) {
 
     if (textSpeed == 1) {
         return 4;
+    }
+
+    // Gunk's: a fourth speed, INSTANT
+    if (textSpeed == 3) {
+        return TEXT_SPEED_INSTANT_TASK;
     }
 
     return 1;

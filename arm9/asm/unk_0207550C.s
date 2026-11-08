@@ -3107,7 +3107,7 @@ sub_02076F2C: ; 0x02076F2C
 	ldrh r0, [r1, #0x26]
 	bl MoveIsHM
 	cmp r0, #0x0
-	bne _02076F98
+	b _02076F98 ; Gunk: TMs are not used up, like HMs (was bne)
 	ldr r0, _02076FAC ; =0x000005A4
 	mov r2, #0x1
 	ldr r1, [r5, r0]

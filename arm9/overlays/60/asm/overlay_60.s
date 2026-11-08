@@ -1,5 +1,8 @@
 	.include "asm/macros.inc"
 	.include "global.inc"
+
+	.extern Gunk_OptionsAddInstant
+	.extern Gunk_OptionsChoiceWidth
 	.section .text
 	.balign 4, 0
 
@@ -1143,6 +1146,8 @@ _021D7E44:
 	str r0, [sp, #4]
 	cmp r0, #7
 	blo _021D7E02
+	add r0, r6, #0
+	bl Gunk_OptionsAddInstant ; Gunk: INSTANT text speed
 	ldrh r0, [r6, #0x18]
 	lsl r0, r0, #0x1c
 	lsr r1, r0, #0x1c
@@ -1306,7 +1311,10 @@ _021D7F8C:
 _021D7F8E:
 	ldr r1, [sp, #0x14]
 	cmp r1, #4
+	beq _gunk_packed_row
+	cmp r1, #0 ; Gunk: TEXT SPEED row is packed too (four choices)
 	bne _021D7FC8
+_gunk_packed_row:
 	lsl r1, r4, #2
 	add r6, r5, r1
 	ldr r1, [sp, #0x18]
@@ -1324,8 +1332,8 @@ _021D7F8E:
 	bl AddTextPrinterParameterized2
 	mov r0, #0
 	ldr r1, [r6, #0x60]
-	add r2, r0, #0
-	bl sub_02002E14
+	ldr r2, [sp, #0x14] ; Gunk: pass the row
+	bl Gunk_OptionsChoiceWidth
 	add r0, #0xc
 	add r0, r7, r0
 	lsl r0, r0, #0x18

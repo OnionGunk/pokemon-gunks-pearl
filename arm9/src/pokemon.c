@@ -2435,7 +2435,9 @@ u16 GetMonEvolution(struct Party *party, struct Pokemon *pokemon, u32 context, u
     beauty = (u8)GetMonData(pokemon, MON_DATA_BEAUTY, NULL);
     pid_hi = (u16)((personality & 0xFFFF0000) >> 16);
     r1 = (u8)GetItemAttr(heldItem, 1, HEAP_ID_DEFAULT);
-    if (species != SPECIES_KADABRA && r1 == HOLD_EFFECT_NO_EVOLVE && context != 3) {
+    // Gunk's: Kadabra ignores the Everstone only when traded (context 1), so its added level-up evolution still
+    // respects it
+    if ((species != SPECIES_KADABRA || context != 1) && r1 == HOLD_EFFECT_NO_EVOLVE && context != 3) {
         return SPECIES_NONE;
     }
     if (method_ret == NULL) {

@@ -614,6 +614,12 @@ Static arm9
     Object gunk_save.o
     Object gunk_dexnav.o
     Object gunk_test.o
+    Object gunk_options.o
+    Object gunk_battle.o
+    Object gunk_registered_items.o
+    Object gunk_field_moves.o
+    Object gunk_summary.o
+    Object gunk_qol.o
 }
 
 Autoload ITCM
@@ -811,6 +817,7 @@ Overlay OVERLAY_11
     Object ov11_0225C91C.o
     Object ov11_0225D3EC.o
     Object ov11_0225D6A4.o
+    Object gunk_quick_run.o
 }
 
 Overlay OVERLAY_12
@@ -1272,6 +1279,7 @@ Overlay OVERLAY_75
     ### Player's bag ###
     After OVERLAY_14
     Object overlay_75.o
+    Object gunk_bag.o
 }
 
 Overlay OVERLAY_76

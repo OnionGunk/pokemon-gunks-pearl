@@ -4,7 +4,7 @@
 // Value and data limits
 #define MAX_LEVEL         100
 #define MAX_MON_MOVES     4
-#define MAX_EV            100
+#define MAX_EV            252 // Gunk's: vitamins work up to 252 EVs (vanilla 100); only the vitamin code uses this
 #define MAX_EV_SUM        510
 #define MAX_LEARNED_MOVES 22
 

@@ -1,5 +1,6 @@
 	.include "asm/macros.inc"
 	.include "global.inc"
+	.extern Gunk_RepelStepCounter
 	.section .text
 	.balign 4, 0
 
@@ -38502,7 +38503,7 @@ ov06_0224C24C: ; 0x0224C24C
 	push {r4, lr}
 	add r4, r1, #0
 	bl Save_Roamers_Get
-	bl sub_0202AB4C
+	bl Gunk_RepelStepCounter ; Gunk: Endless Repel
 	ldrb r1, [r0]
 	cmp r1, #0
 	beq _0224C278

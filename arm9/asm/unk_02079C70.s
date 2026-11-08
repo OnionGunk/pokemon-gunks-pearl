@@ -1,5 +1,7 @@
 	.include "asm/macros.inc"
 	.include "global.inc"
+	.extern Gunk_SummaryLoadMon
+	.extern Gunk_SummaryHandleInput
 
 	.extern gSystem
 
@@ -822,6 +824,13 @@ sub_0207A310: ; 0x0207A310
 	mov r0, #0x12
 	pop {r4-r6, pc}
 _0207A32E:
+	bl Gunk_SummaryHandleInput ; Gunk: A on the Skills page shows IVs/EVs
+	cmp r0, #0x0
+	beq _gunk_summary_input
+	mov r0, #0x2
+	pop {r4-r6, pc}
+_gunk_summary_input:
+	add r0, r4, #0x0
 	ldr r2, _0207A43C ; =gSystem
 	mov r1, #0x20
 	ldr r5, [r2, #0x4c]
@@ -1810,7 +1819,7 @@ _0207AAD2:
 	add r2, r2, #0x4
 	add r0, r4, #0x0
 	add r2, r4, r2
-	bl sub_0207AB0C
+	bl Gunk_SummaryLoadMon ; Gunk: cache IVs/EVs
 	pop {r4, pc}
 	.balign 4
 
@@ -1829,7 +1838,7 @@ sub_0207AAE0: ; 0x0207AAE0
 	add r0, r5, #0x0
 	add r1, r4, #0x0
 	add r2, r7, #0x0
-	bl sub_0207AB0C
+	bl Gunk_SummaryLoadMon ; Gunk: cache IVs/EVs
 	add r0, r4, #0x0
 	bl Heap_Free
 	pop {r3-r7, pc}

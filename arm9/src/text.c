@@ -156,6 +156,11 @@ u16 AddTextPrinter(struct TextPrinterTemplate *printerTemplate, u32 speed, u8 (*
 
     struct TextPrinter *printer = (struct TextPrinter *)Heap_Alloc(HEAP_ID_DEFAULT, sizeof(struct TextPrinter));
 
+    printer->instant = speed == TEXT_SPEED_INSTANT_TASK;
+    if (printer->instant) {
+        speed = 1; // the fastest timed speed; RunTextPrinter then prints ahead each frame
+    }
+
     printer->active = TRUE;
     printer->state = 0;
     printer->textSpeedBottom = (u8)speed;
@@ -203,6 +208,16 @@ void RunTextPrinter(SysTask *sysTask, struct TextPrinter *printer) {
             printer->Unk2A = 0;
             GenerateFontHalfRowLookupTable(printer->printerTemplate.fgColor, printer->printerTemplate.bgColor, printer->printerTemplate.shadowColor);
             u32 temp = RenderFont(printer);
+            // Gunk's INSTANT text: keep printing until the printer waits for a button, scrolls or ends
+            if (printer->instant) {
+                for (s32 i = 0; temp == 0 && i < 1024; i++) {
+                    temp = RenderFont(printer);
+                    if (temp == 3) {
+                        temp = 0; // the characters printed so far still need copying
+                        break;
+                    }
+                }
+            }
             switch (temp) {
             case 0:
                 CopyWindowToVram(printer->printerTemplate.window);
@@ -214,6 +229,10 @@ void RunTextPrinter(SysTask *sysTask, struct TextPrinter *printer) {
                 printer->Unk29 = printer->callback(&printer->printerTemplate, printer->Unk2A);
                 return;
             case 1:
+                // INSTANT text may have printed the message's last characters this frame without copying them
+                if (printer->instant) {
+                    CopyWindowToVram(printer->printerTemplate.window);
+                }
                 sub_0201BCFC(printer->minLetterSpacing);
                 return;
             default:

@@ -476,6 +476,11 @@
           "method": "EVO_TRADE_ITEM",
           "target": "POLITOED",
           "param": "ITEM_KINGS_ROCK"
+        },
+        {
+          "method": "EVO_STONE",
+          "target": "POLITOED",
+          "param": "ITEM_KINGS_ROCK"
         }
       ]
     },
@@ -499,6 +504,11 @@
         {
           "method": "EVO_TRADE",
           "target": "ALAKAZAM"
+        },
+        {
+          "method": "EVO_LEVEL",
+          "target": "ALAKAZAM",
+          "param": 36
         }
       ]
     },
@@ -522,6 +532,11 @@
         {
           "method": "EVO_TRADE",
           "target": "MACHAMP"
+        },
+        {
+          "method": "EVO_LEVEL",
+          "target": "MACHAMP",
+          "param": 37
         }
       ]
     },
@@ -583,6 +598,11 @@
         {
           "method": "EVO_TRADE",
           "target": "GOLEM"
+        },
+        {
+          "method": "EVO_LEVEL",
+          "target": "GOLEM",
+          "param": 37
         }
       ]
     },
@@ -614,6 +634,11 @@
         },
         {
           "method": "EVO_TRADE_ITEM",
+          "target": "SLOWKING",
+          "param": "ITEM_KINGS_ROCK"
+        },
+        {
+          "method": "EVO_STONE",
           "target": "SLOWKING",
           "param": "ITEM_KINGS_ROCK"
         }
@@ -718,6 +743,11 @@
         {
           "method": "EVO_TRADE",
           "target": "GENGAR"
+        },
+        {
+          "method": "EVO_LEVEL",
+          "target": "GENGAR",
+          "param": 37
         }
       ]
     },
@@ -730,6 +760,11 @@
       "evos": [
         {
           "method": "EVO_TRADE_ITEM",
+          "target": "STEELIX",
+          "param": "ITEM_METAL_COAT"
+        },
+        {
+          "method": "EVO_STONE",
           "target": "STEELIX",
           "param": "ITEM_METAL_COAT"
         }
@@ -854,6 +889,11 @@
           "method": "EVO_TRADE_ITEM",
           "target": "RHYPERIOR",
           "param": "ITEM_PROTECTOR"
+        },
+        {
+          "method": "EVO_STONE",
+          "target": "RHYPERIOR",
+          "param": "ITEM_PROTECTOR"
         }
       ]
     },
@@ -895,6 +935,11 @@
       "evos": [
         {
           "method": "EVO_TRADE_ITEM",
+          "target": "KINGDRA",
+          "param": "ITEM_DRAGON_SCALE"
+        },
+        {
+          "method": "EVO_STONE",
           "target": "KINGDRA",
           "param": "ITEM_DRAGON_SCALE"
         }
@@ -939,6 +984,11 @@
           "method": "EVO_TRADE_ITEM",
           "target": "SCIZOR",
           "param": "ITEM_METAL_COAT"
+        },
+        {
+          "method": "EVO_STONE",
+          "target": "SCIZOR",
+          "param": "ITEM_METAL_COAT"
         }
       ]
     },
@@ -953,6 +1003,11 @@
           "method": "EVO_TRADE_ITEM",
           "target": "ELECTIVIRE",
           "param": "ITEM_ELECTIRIZER"
+        },
+        {
+          "method": "EVO_STONE",
+          "target": "ELECTIVIRE",
+          "param": "ITEM_ELECTIRIZER"
         }
       ]
     },
@@ -961,6 +1016,11 @@
       "evos": [
         {
           "method": "EVO_TRADE_ITEM",
+          "target": "MAGMORTAR",
+          "param": "ITEM_MAGMARIZER"
+        },
+        {
+          "method": "EVO_STONE",
           "target": "MAGMORTAR",
           "param": "ITEM_MAGMARIZER"
         }
@@ -1049,6 +1109,11 @@
       "evos": [
         {
           "method": "EVO_TRADE_ITEM",
+          "target": "PORYGON2",
+          "param": "ITEM_UPGRADE"
+        },
+        {
+          "method": "EVO_STONE",
           "target": "PORYGON2",
           "param": "ITEM_UPGRADE"
         }
@@ -1693,6 +1758,11 @@
       "evos": [
         {
           "method": "EVO_TRADE_ITEM",
+          "target": "PORYGON_Z",
+          "param": "ITEM_DUBIOUS_DISC"
+        },
+        {
+          "method": "EVO_STONE",
           "target": "PORYGON_Z",
           "param": "ITEM_DUBIOUS_DISC"
         }
@@ -2564,6 +2634,11 @@
           "method": "EVO_TRADE_ITEM",
           "target": "DUSKNOIR",
           "param": "ITEM_REAPER_CLOTH"
+        },
+        {
+          "method": "EVO_STONE",
+          "target": "DUSKNOIR",
+          "param": "ITEM_REAPER_CLOTH"
         }
       ]
     },
@@ -2642,6 +2717,16 @@
         },
         {
           "method": "EVO_TRADE_ITEM",
+          "target": "GOREBYSS",
+          "param": "ITEM_DEEPSEASCALE"
+        },
+        {
+          "method": "EVO_STONE",
+          "target": "HUNTAIL",
+          "param": "ITEM_DEEPSEATOOTH"
+        },
+        {
+          "method": "EVO_STONE",
           "target": "GOREBYSS",
           "param": "ITEM_DEEPSEASCALE"
         }

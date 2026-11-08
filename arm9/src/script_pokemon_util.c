@@ -13,6 +13,9 @@
 #include "save.h"
 #include "unk_02015CC0.h"
 #include "unk_0202C144.h"
+#include "bag.h"
+#include "save.h"
+#include "gunk/field_moves.h"
 
 BOOL MonNotFaintedOrEgg(struct Pokemon *pokemon) {
     if (GetMonData(pokemon, MON_DATA_HP, NULL) == 0) {
@@ -60,23 +63,9 @@ void PartyMonSetMoveInSlot(struct Party *party, int partySlot, int moveSlot, u16
     MonSetMoveInSlot(mon, move, (u8)moveSlot);
 }
 
+// Gunk's: field moves (Surf, Waterfall) also work for a Pokémon that could learn the move from an HM the player owns
 int GetIdxOfFirstPartyMonWithMove(struct Party *party, int move) {
-    int partyCount = Party_GetCount(party);
-
-    for (int i = 0; i < partyCount; i++) {
-        struct Pokemon *mon = Party_GetMonByIndex(party, i);
-
-        if (GetMonData(mon, MON_DATA_IS_EGG, NULL)) {
-            continue;
-        }
-        if (GetMonData(mon, MON_DATA_MOVE1, NULL) == move
-            || GetMonData(mon, MON_DATA_MOVE2, NULL) == move
-            || GetMonData(mon, MON_DATA_MOVE3, NULL) == move
-            || GetMonData(mon, MON_DATA_MOVE4, NULL) == move) {
-            return i;
-        }
-    }
-    return 0xFF;
+    return Gunk_FindPartyMonForFieldMove(party, Save_Bag_Get(sub_020225F8()), (u16)move);
 }
 
 int CountAlivePokemon(struct Party *party) {

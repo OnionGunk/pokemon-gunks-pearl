@@ -1,5 +1,6 @@
 	.include "asm/macros.inc"
 	.include "global.inc"
+	.extern Gunk_SummaryDrawSkills
 
 	.section .rodata
 
@@ -1084,7 +1085,7 @@ _0207DDF2:
 	pop {r4, pc}
 _0207DDFC:
 	add r0, r4, #0x0
-	bl sub_0207E200
+	bl Gunk_SummaryDrawSkills ; Gunk: IV/EV view
 	add sp, #0x10
 	pop {r4, pc}
 _0207DE06:

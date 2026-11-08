@@ -529,4 +529,28 @@
 		<attribute name="window_context_name">used</attribute>
 		<language name="English">The {STRVAR_1 25, 0} was sent to\nthe underground PC.\r</language>
 	</row>
+	<row id="narc_0199_00129" index="129">
+		<attribute name="window_context_name">used</attribute>
+		<language name="English">Repel’s effect wore off...\nUse another {STRVAR_1 8, 0}?</language>
+	</row>
+	<row id="narc_0199_00130" index="130">
+		<attribute name="window_context_name">used</attribute>
+		<language name="English">Used another {STRVAR_1 8, 0}.</language>
+	</row>
+	<row id="narc_0199_00131" index="131">
+		<attribute name="window_context_name">used</attribute>
+		<language name="English">The Endless Repel was turned on.\nWeak wild Pokémon will stay away.</language>
+	</row>
+	<row id="narc_0199_00132" index="132">
+		<attribute name="window_context_name">used</attribute>
+		<language name="English">The Endless Repel was turned off.</language>
+	</row>
+	<row id="narc_0199_00133" index="133">
+		<attribute name="window_context_name">used</attribute>
+		<language name="English">The Exp. All was turned on.\nYour whole party will gain Exp. Points.</language>
+	</row>
+	<row id="narc_0199_00134" index="134">
+		<attribute name="window_context_name">used</attribute>
+		<language name="English">The Exp. All was turned off.</language>
+	</row>
 </body>

@@ -22,6 +22,11 @@ $(error Invalid GAME_VERSION: $(GAME_VERSION))
 endif
 endif
 
+# Gunk's: ROM header title GUNK + the retail short code (GUNK D / GUNK P); compare builds keep the retail title
+ifeq ($(COMPARE),0)
+TITLE_NAME := $(subst POKEMON,GUNK,$(TITLE_NAME))
+endif
+
 ifeq ($(GAME_LANGUAGE),ENGLISH)
 GAME_CODE := $(GAME_CODE)E
 BUILD_NAME := $(BUILD_NAME).us

@@ -1,5 +1,7 @@
 	.include "asm/macros.inc"
 	.include "global.inc"
+
+	.extern Gunk_BattleMenuInput
 	.section .text
 	.balign 4, 0
 
@@ -7005,7 +7007,7 @@ _02250DB6:
 	blt _02250DB6
 _02250DD0:
 	add r0, r6, #0
-	bl ov11_02258E74
+	bl Gunk_BattleMenuInput ; Gunk: Quick Run (R) in wild battles
 	mov r1, #0
 	mvn r1, r1
 	str r0, [r4, #0xc]

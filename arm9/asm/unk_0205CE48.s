@@ -2,6 +2,8 @@
 	.include "global.inc"
 
 	.extern gSystem
+	.extern Gunk_RegisteredItemToUse
+	.extern Gunk_RegisteredItemLastUsed
 	.extern UNK_020F96DC
 
 	.section .rodata
@@ -32,6 +34,8 @@ UNK_020F7260: ; 0x020F7260
 	.word sub_0205DA3C, 0x00000000, sub_0205DA80
 	.word sub_0205DACC, sub_0205DADC, sub_0205DAEC
 	.word GunkDexNav_ItemBagUse, GunkDexNav_ItemFieldUse, GunkDexNav_ItemCheck ; 23: Gunk's DexNav
+	.word Gunk_EndlessRepelBagUse, Gunk_EndlessRepelFieldUse, Gunk_ToggleItemCheck ; 24: Gunk's Endless Repel
+	.word Gunk_ExpAllBagUse, Gunk_ExpAllFieldUse, Gunk_ToggleItemCheck ; 25: Gunk's Exp. All
 
 	.text
 
@@ -1391,7 +1395,7 @@ sub_0205D8B8: ; 0x0205D8B8
 	ldr r0, [r5, #0x0]
 	ldr r0, [r0, #0xc]
 	bl Save_Bag_Get
-	bl Bag_GetRegisteredItem
+	bl Gunk_RegisteredItemLastUsed ; Gunk: the item that was just used
 	add r2, r0, #0x0
 	ldr r0, [r5, #0x0]
 	lsl r2, r2, #0x10
@@ -1706,7 +1710,7 @@ _0205DB54:
 _0205DB66:
 	ldr r0, [r5, #0xc]
 	bl Save_Bag_Get
-	bl Bag_GetRegisteredItem
+	bl Gunk_RegisteredItemToUse ; Gunk: Y item or Select item
 	lsl r0, r0, #0x10
 	lsr r0, r0, #0x10
 	mov r1, #0x6

@@ -1682,7 +1682,7 @@ _021ED1A2:
 	cmp r0, #0x31
 	bne _021ED1D6
 _021ED1D2:
-	mov r0, #2
+	mov r0, #4 ; Gunk: eggs hatch twice as fast (four times with Magma Armor or Flame Body)
 	pop {r3, r4, r5, r6, r7, pc}
 _021ED1D6:
 	add r0, r4, #1
@@ -1691,7 +1691,7 @@ _021ED1D6:
 	cmp r4, r6
 	blt _021ED1A2
 _021ED1E0:
-	mov r0, #1
+	mov r0, #2 ; Gunk: was 1
 	pop {r3, r4, r5, r6, r7, pc}
 
 	thumb_func_start ov05_021ED1E4

@@ -1,5 +1,7 @@
 	.include "asm/macros.inc"
 	.include "global.inc"
+
+	.extern Gunk_FieldRegisteredItemButton
 	.section .text
 	.balign 4, 0
 
@@ -99,9 +101,11 @@ _021D819A:
 	orr r0, r1
 	strh r0, [r5]
 _021D81AA:
-	mov r0, #2
-	lsl r0, r0, #0xa
-	tst r0, r6
+	push {r2}
+	add r0, r6, #0
+	bl Gunk_FieldRegisteredItemButton ; Gunk: Y or Select uses a registered item
+	pop {r2}
+	cmp r0, #0
 	beq _021D81BA
 	ldrh r1, [r5]
 	mov r0, #8

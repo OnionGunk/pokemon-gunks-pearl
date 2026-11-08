@@ -1,5 +1,7 @@
 	.include "asm/macros.inc"
 	.include "global.inc"
+
+	.extern Gunk_HealthboxUpdateGauge
 	.section .text
 	.balign 4, 0
 
@@ -2001,7 +2003,7 @@ ov11_02257BEC: ; 0x02257BEC
 	ldr r1, [r5, #0x28]
 	ldr r2, [r5, #0x30]
 	add r3, #0x34
-	bl ov11_02257DE8
+	bl Gunk_HealthboxUpdateGauge ; Gunk: faster HP/EXP bars
 	add r6, r0, #0
 	b _02257C48
 _02257C10:
@@ -2028,7 +2030,7 @@ _02257C22:
 	ldr r1, [r5, #0x38]
 	add r2, r6, #0
 	add r3, #0x44
-	bl ov11_02257DE8
+	bl Gunk_HealthboxUpdateGauge ; Gunk: faster HP/EXP bars
 	add r6, r0, #0
 _02257C48:
 	cmp r4, #0

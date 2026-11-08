@@ -35,12 +35,51 @@ void Save_Bag_Copy(const Bag *src, Bag *dest) {
     MI_CpuCopy8(src, dest, sizeof(Bag));
 }
 
+// Gunk's: two registered items, kept in the two halves of registeredItem: the latest on Y (low half) and the one
+// registered before it on Select (high half).
 u32 Bag_GetRegisteredItem(Bag *bag) {
-    return bag->registeredItem;
+    return bag->registeredItem & 0xFFFF;
 }
 
+u32 Bag_GetSecondRegisteredItem(Bag *bag) {
+    return bag->registeredItem >> 16;
+}
+
+BOOL Bag_IsItemRegistered(Bag *bag, u16 item) {
+    return item != ITEM_NONE && (Bag_GetRegisteredItem(bag) == item || Bag_GetSecondRegisteredItem(bag) == item);
+}
+
+// The new item goes on Y and the item that was on Y moves to Select. ITEM_NONE clears both.
 void Bag_SetRegisteredItem(Bag *bag, u32 item) {
-    bag->registeredItem = item;
+    u16 first = Bag_GetRegisteredItem(bag);
+    u16 second = Bag_GetSecondRegisteredItem(bag);
+
+    if (item == ITEM_NONE) {
+        bag->registeredItem = 0;
+        return;
+    }
+
+    if (item != first) {
+        second = first;
+        first = item;
+    }
+
+    bag->registeredItem = first | ((u32)second << 16);
+}
+
+// Gunk's: deselecting removes only that item; the other one moves to Y if needed.
+void Bag_UnregisterItem(Bag *bag, u16 item) {
+    u16 first = Bag_GetRegisteredItem(bag);
+    u16 second = Bag_GetSecondRegisteredItem(bag);
+
+    if (first == item) {
+        first = second;
+        second = ITEM_NONE;
+    } else if (second == item) {
+        second = ITEM_NONE;
+    }
+
+    bag->registeredItem = first | ((u32)second << 16);
 }
 
 static u32 Bag_GetItemPocket(Bag *bag, u16 itemId, ItemSlot **itemSlots, u32 *countPtr, enum HeapID heapID) {

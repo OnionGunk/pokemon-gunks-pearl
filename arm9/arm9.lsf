@@ -1355,6 +1355,15 @@ Overlay OVERLAY_86
     Object overlay_86.o
 }
 
+Overlay OVERLAY_88
+{
+    ### Gunk's DexNav Pokétch app (a copy of the Pokemon History app) ###
+    After OVERLAY_20
+    Object overlay_88_sinit.o
+    Object gunk_poketch_dexnav.o
+    Object gunk_poketch_dexnav_c.o
+}
+
 Overlay OVERLAY_87
 {
     ### Gunk's DexNav screen ###

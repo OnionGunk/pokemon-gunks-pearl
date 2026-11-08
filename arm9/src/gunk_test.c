@@ -13,6 +13,7 @@
 #include "heap.h"
 #include "party.h"
 #include "pokedex.h"
+#include "poketch.h"
 #include "player_data.h"
 #include "pokemon.h"
 #include "save.h"
@@ -78,6 +79,16 @@ void Gunk_TestNewGame(struct SaveData *save) {
         if (gGunkTestFlags[i] != 0) {
             Save_VarsFlags_SetFlagInArray(Save_VarsFlags_Get(save), gGunkTestFlags[i]);
         }
+    }
+
+    // the Pokétch with the DexNav app showing (the watch, then the app)
+    {
+        struct Poketch *poketch = Save_Poketch_Get(save);
+
+        Save_Poketch_Give(poketch);
+        Save_Poketch_UnlockApp(poketch, POKETCH_DIGITAL_WATCH);
+        Save_Poketch_UnlockApp(poketch, POKETCH_DEXNAV);
+        poketch->selectedApp = POKETCH_DEXNAV;
     }
 
     // Master Balls for catching in the legality tests

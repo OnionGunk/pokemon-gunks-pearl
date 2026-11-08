@@ -9380,3 +9380,9 @@
 .extern GunkFollower_Movement
 .extern GunkFollower_Renderer
 .extern GunkFollower_BillboardAnims
+.extern GunkPoketchDexNav_Fill
+.extern GunkPoketchDexNav_IconIndex
+.extern GunkPoketchDexNav_IconPalette
+.extern GunkPoketchDexNav_Touched
+.extern GunkPoketchDexNav_Title
+.extern SDK_OVERLAY_OVERLAY_88_ID

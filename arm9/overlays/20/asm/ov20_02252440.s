@@ -626,7 +626,7 @@ LoadPoketchApp: ; 0x022528B0
 	add r5, r0, #0
 	add r4, r1, #0
 	bmi _022528BC
-	cmp r4, #0x19
+	cmp r4, #0x1a ; Gunk's: 26 apps (the DexNav is 25)
 	blo _022528C0
 _022528BC:
 	bl GF_AssertFail
@@ -654,7 +654,7 @@ _022528CE:
 _022528E8:
 	add r1, r1, #1
 	add r2, #8
-	cmp r1, #0x19
+	cmp r1, #0x1a
 	blo _022528CE
 _022528F0:
 	pop {r4, r5, r6, pc}
@@ -1242,4 +1242,5 @@ sPoketchAppOverlayMapping: ; 0x022544DC
 	.word 13, SDK_OVERLAY_OVERLAY_47_ID
 	.word 19, SDK_OVERLAY_OVERLAY_48_ID
 	.word  9, SDK_OVERLAY_OVERLAY_49_ID
+	.word 25, SDK_OVERLAY_OVERLAY_88_ID ; Gunk's DexNav
 

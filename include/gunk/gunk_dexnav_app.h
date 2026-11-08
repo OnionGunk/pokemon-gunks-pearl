@@ -38,6 +38,9 @@ typedef struct DexNavData {
 
 // arm9 (src/gunk_dexnav.c): fills a DexNavData from the current map's encounter table
 void GunkDexNav_BuildAreaData(FieldSystem *fieldSystem, DexNavData *data);
+// arm9: the field system of the running field (NULL before the first field frame)
+FieldSystem *GunkDexNav_FieldSystem(void);
+void GunkDexNav_SetFieldSystem(FieldSystem *fieldSystem);
 // arm9: opens the DexNav screen from a field task and returns to the field
 void GunkDexNav_OpenScreen(FieldSystem *fieldSystem);
 

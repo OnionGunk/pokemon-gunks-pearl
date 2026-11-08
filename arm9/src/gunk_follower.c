@@ -2,6 +2,7 @@
 
 #include "gunk/gunk_follower.h"
 #include "gunk/gunk_follower_species.h"
+#include "gunk/gunk_dexnav_app.h"
 
 #include "constants/global_fieldmap.h"
 #include "constants/maps.h"
@@ -228,6 +229,9 @@ static void GunkFollower_SpawnOnPlayer(FieldSystem *fieldSystem, u32 sprite) {
 void GunkFollower_OnObjectsCreated(FieldSystem *fieldSystem) {
     LocalMapObject *follower = GunkFollower_Get(fieldSystem);
     u32 sprite = GunkFollower_GetLeadSprite(fieldSystem);
+
+    // the field's objects exist now: the DexNav Pokétch app (loaded before the first field frame) can read the map
+    GunkDexNav_SetFieldSystem(fieldSystem);
 
     if (follower == NULL) {
         if (sprite != 0) {

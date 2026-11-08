@@ -138,21 +138,38 @@ TUTORIAL_BALLS_AND_DEXNAV = TUTORIAL_BALLS + """    Unk002C 14
     SetVar 0x8004, 465
     SetVar 0x8005, 1
     RunScriptWait 0x7FC
+    UnlockPoketchApp 25
     Unk002C 15
+"""
+
+# earlier builds gave the DexNav without its Pokétch app (app 25)
+GIFT_WITHOUT_APP = """    SetVar 0x8005, 1
+    RunScriptWait 0x7FC
+    Unk002C 0xF
+"""
+GIFT_WITH_APP = """    SetVar 0x8005, 1
+    RunScriptWait 0x7FC
+    UnlockPoketchApp 25
+    Unk002C 0xF
 """
 
 
 def patch_route202():
     path = os.path.join(SCRIPTS, 'narc_0393.bin')
     text = dpscript.disasm(open(path, 'rb').read())
-    if 'Unk002C 0xF' in text or 'Unk002C 15' in text:
+    if 'UnlockPoketchApp 0x19' in text or 'UnlockPoketchApp 25' in text:
         print('narc_0393: already patched')
+        return
+    if 'Unk002C 0xF' in text:
+        assert text.count(GIFT_WITHOUT_APP) == 1, 'unexpected DexNav gift script'
+        open(path, 'wb').write(dpscript.asm(text.replace(GIFT_WITHOUT_APP, GIFT_WITH_APP)))
+        print('narc_0393: added the DexNav Pokétch app')
         return
     assert text.count(TUTORIAL_BALLS) == 1, 'unexpected catching tutorial script'
     text = text.replace(TUTORIAL_BALLS, TUTORIAL_BALLS_AND_DEXNAV)
     data = dpscript.asm(text)
     check = dpscript.disasm(data)
-    assert check.count('RunScriptWait 0x7FC') == 2 and ('Unk002C 0xF' in check or 'Unk002C 15' in check),         'reassembled script lost the gift'
+    assert check.count('RunScriptWait 0x7FC') == 2 and 'UnlockPoketchApp' in check and ('Unk002C 0xF' in check or 'Unk002C 15' in check),         'reassembled script lost the gift'
     open(path, 'wb').write(data)
     print('narc_0393: patched (%d bytes)' % len(data))
 

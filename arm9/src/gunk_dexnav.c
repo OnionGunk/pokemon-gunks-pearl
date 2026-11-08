@@ -180,6 +180,7 @@ typedef struct SearchTable {
 // Lives in the main binary so it survives the field unloading for menus and battles.
 static DexNavSearch sSearch;
 static Window sHud;
+static FieldSystem *sFieldSystem; // for the DexNav Pokétch app, which runs beside the field
 static BOOL sHudShown;
 
 static int Abs(int value) {
@@ -934,6 +935,7 @@ void Gunk_FieldInputUpdate(void *input, FieldSystem *fieldSystem, u16 pressedKey
 BOOL Gunk_FieldInputProcess(void *input, FieldSystem *fieldSystem) {
     SearchRefusal result;
 
+    sFieldSystem = fieldSystem;
     sSearch.playerX = (int)PlayerAvatar_GetXCoord(fieldSystem->playerAvatar);
     sSearch.playerZ = (int)PlayerAvatar_GetZCoord(fieldSystem->playerAvatar);
 
@@ -1242,4 +1244,12 @@ BOOL GunkDexNav_ItemFieldUse(FieldSystem **context) {
 // usable anywhere in the field (2: not now, as the Poke Radar answers in the Underground)
 int GunkDexNav_ItemCheck(u32 *context) {
     return context[1] == 1 ? 2 : 0;
+}
+
+FieldSystem *GunkDexNav_FieldSystem(void) {
+    return sFieldSystem;
+}
+
+void GunkDexNav_SetFieldSystem(FieldSystem *fieldSystem) {
+    sFieldSystem = fieldSystem;
 }

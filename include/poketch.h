@@ -33,6 +33,7 @@ typedef enum PoketchApp {
     POKETCH_MATCHUP_CHECKER,
     POKETCH_STOPWATCH,
     POKETCH_ALARM_CLOCK,
+    POKETCH_DEXNAV, // Gunk's: overlay 88
     NUM_POKETCH_APPS
 } PoketchApp;
 

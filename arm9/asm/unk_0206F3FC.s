@@ -2,6 +2,7 @@
 	.include "global.inc"
 
 	.extern gSystem
+	.extern Gunk_PartyMenuAddHMMoves
 	.extern gSystem
 
 	.section .rodata
@@ -3820,6 +3821,12 @@ _02071206:
 	cmp r6, #0x4
 	blo _020711D0
 _02071210:
+	ldr r0, [sp, #0x0] ; Gunk: HM moves it could learn from an HM the player owns
+	ldr r1, [sp, #0x4]
+	add r2, r5, #0x0
+	add r3, r4, #0x0
+	bl Gunk_PartyMenuAddHMMoves
+	add r5, r0, #0x0
 	ldr r0, [sp, #0x4]
 	mov r1, #0x0
 	strb r1, [r0, r5]

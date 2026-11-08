@@ -13,6 +13,9 @@
 #include "unk_02015CC0.h"
 #include "unk_02022504.h"
 #include "unk_0207FC5C.h"
+#include "bag.h"
+#include "save.h"
+#include "gunk/field_moves.h"
 
 extern u16 sub_02054DEC(struct SaveData *save);
 
@@ -139,19 +142,11 @@ BOOL ScrCmd_FindPartyMonWithMove(struct ScriptContext *ctx) // 009A - todo: Chec
     u16 required_move = ScriptGetVar(ctx);
     u8 party_count = (u8)Party_GetCount(SaveArray_Party_Get(fieldSystem->saveData));
 
-    u8 i;
-    for (i = 0, *ret_ptr = PARTY_SIZE; i < party_count; i++) {
-        struct Party *party = SaveArray_Party_Get(fieldSystem->saveData);
-        struct Pokemon *party_mon = Party_GetMonByIndex(party, i);
-
-        BOOL party_mon_is_egg = (BOOL)GetMonData(party_mon, MON_DATA_IS_EGG, NULL);
-        if (party_mon_is_egg == FALSE) {
-            if (required_move == GetMonData(party_mon, MON_DATA_MOVE1, NULL) || required_move == GetMonData(party_mon, MON_DATA_MOVE2, NULL) || required_move == GetMonData(party_mon, MON_DATA_MOVE3, NULL) || required_move == GetMonData(party_mon, MON_DATA_MOVE4, NULL)) {
-                *ret_ptr = i;
-                break;
-            }
-        }
-    }
+#pragma unused(party_count)
+    // Gunk's: field moves (the only use of this command) also work for a Pokémon that could learn the move from an
+    // HM the player owns
+    int slot = Gunk_FindPartyMonForFieldMove(SaveArray_Party_Get(fieldSystem->saveData), Save_Bag_Get(fieldSystem->saveData), required_move);
+    *ret_ptr = slot == 0xFF ? PARTY_SIZE : slot;
 
     return FALSE;
 }

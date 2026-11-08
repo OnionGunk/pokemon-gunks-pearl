@@ -615,6 +615,7 @@ Static arm9
     Object gunk_battle.o
     Object gunk_registered_items.o
     Object gunk_field_moves.o
+    Object gunk_summary.o
 }
 
 Autoload ITCM

@@ -286,6 +286,8 @@ sub_02048AE4: ; 0x02048AE4
 	bl PlayerAvatar_CreateWithParams
 	str r0, [r5, #0x38]
 	add r0, r5, #0x0
+	bl GunkFollower_OnObjectsCreated ; Gunk's: the party lead follows the player
+	add r0, r5, #0x0
 	bl sub_02034AC8
 	ldr r0, [r5, #0x34]
 	bl sub_02058768
@@ -328,6 +330,8 @@ sub_02048B50: ; 0x02048B50
 	add r1, r4, #0x0
 	bl PlayerAvatar_CreateWithActiveMapObject
 	str r0, [r5, #0x38]
+	add r0, r5, #0x0
+	bl GunkFollower_OnObjectsCreated ; Gunk's: update (or create) the follower after the restore
 	ldr r0, [r5, #0x34]
 	bl sub_02058768
 	pop {r3-r5, pc}

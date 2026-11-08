@@ -2,6 +2,7 @@
 
 #include "gunk/gunk_dexnav.h"
 #include "gunk/gunk_dexnav_app.h"
+#include "gunk/gunk_follower.h"
 #include "gunk/gunk_save.h"
 #include "gunk/gunk_test.h"
 
@@ -924,6 +925,7 @@ void Gunk_FieldInputUpdate(void *input, FieldSystem *fieldSystem, u16 pressedKey
     u32 moveState;
 
     ov05_021D8164_Vanilla(input, fieldSystem, pressedKeys, heldKeys);
+    GunkFollower_FieldUpdate(fieldSystem); // Gunk's Pokemon follower
     moveState = PlayerAvatar_GetUnk14(fieldSystem->playerAvatar);
     // the same moment the game takes A, X and Y: standing still or a step just finished
     sSearch.rPressed = (pressedKeys & PAD_BUTTON_R) && (moveState == 0 || moveState == 3);

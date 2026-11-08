@@ -391,6 +391,7 @@ UNK_020F6364: ; 0x020F6364
 	.word UNK_020F622C, UNK_020F6218, UNK_020F627C, UNK_020F62CC
 	.word UNK_020F5F48, UNK_020F6164, UNK_020F5EBC, UNK_020F5F20
 	.word UNK_020F5EE4, UNK_020F5EF8, UNK_020F5F70
+	.word GunkFollower_Movement ; 55: Gunk's Pokemon follower (gunk_follower.c)
 
 	.global UNK_020F6440
 UNK_020F6440: ; 0x020F6440
@@ -1264,7 +1265,10 @@ _02058F82:
 	add r0, r4, #0x0
 	bl MapObject_GetMovement
 	cmp r0, #0x32
+	beq _02058F8C_Gunk
+	cmp r0, #0x37 ; Gunk's Pokemon follower (movement 55) is treated like movement 50
 	bne _02058F90
+_02058F8C_Gunk:
 	mov r0, #0x1
 	pop {r4, pc}
 _02058F90:
@@ -2470,8 +2474,8 @@ sub_02059918: ; 0x02059918
 	pop {r4-r7, pc}
 	.balign 4
 
-	thumb_func_start sub_0205995C
-sub_0205995C: ; 0x0205995C
+	thumb_func_start sub_0205995C_Vanilla
+sub_0205995C_Vanilla: ; 0x0205995C (Gunk's: wrapped by sub_0205995C in gunk_follower.c)
 	push {r4-r7, lr}
 	sub sp, #0xc
 	str r0, [sp, #0x0]

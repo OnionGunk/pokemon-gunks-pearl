@@ -9376,3 +9376,7 @@
 .extern GunkDexNav_ItemBagUse
 .extern GunkDexNav_ItemFieldUse
 .extern GunkDexNav_ItemCheck
+.extern GunkFollower_OnObjectsCreated
+.extern GunkFollower_Movement
+.extern GunkFollower_Renderer
+.extern GunkFollower_BillboardAnims

@@ -7,7 +7,7 @@
 #include "field_system.h"
 #include "heap.h"
 
-extern UnkLMOCallbackStruct *UNK_020F6364[55];
+extern UnkLMOCallbackStruct *UNK_020F6364[56]; // Gunk's: + movement 55, the Pokemon follower (gunk_follower.c)
 extern UnkLMOCallbackStruct3 ov05_021F9494[210];
 
 static MapObjectManager *MapObjectManager_New(u32 objectCount);
@@ -575,7 +575,7 @@ static LocalMapObject *sub_02057C98(MapObjectManager *manager, u32 id, u32 mapNo
 static void sub_02057CF0(MapObjectManager *manager, LocalMapObject *object) {
     u32 priority = MapObjectManager_GetPriority(manager);
     u32 movement = MapObject_GetMovement(object);
-    if (movement == 48 || movement == 50) {
+    if (movement == 48 || movement == 50 || movement == 55) { // Gunk's: 55 = Pokemon follower, after the player like 48
         priority += 2;
     }
 

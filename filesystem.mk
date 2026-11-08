@@ -279,6 +279,8 @@ HOSTFS_FILES := $(NITROFS_FILES:%=files/%)
 
 # Gunk's: field scripts are patched in place (tools/gunk/patch_scripts.py); repack them when a file changes
 files/fielddata/script/scr_seq_release.narc: $(wildcard files/fielddata/script/scr_seq_release/*.bin)
+# Gunk's followers: HeartGold sprites added to mmodel (tools/gunk/followers/extract_hg.py)
+files/data/mmodel/mmodel.narc: $(wildcard files/data/mmodel/mmodel/*)
 
 %.arc:
 	$(KNARC) -d $(basename $@)/ -p $@ -i

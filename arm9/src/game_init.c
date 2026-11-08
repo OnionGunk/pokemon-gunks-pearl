@@ -95,7 +95,7 @@ const HeapParam UNK_020EDB10[] = {
     { 0x00D000, OS_ARENA_MAIN },
     { 0x025000, OS_ARENA_MAIN }, // Gunk's: vanilla 0x021000; SaveData grew by 0x4000 (36 save pages)
     { 0x001000, OS_ARENA_MAIN },
-    { 0x109800, OS_ARENA_MAIN }  // Gunk's: vanilla 0x10D800, the 0x4000 given to heap 1
+    { 0x10D800, OS_ARENA_MAIN }  // vanilla size; the arena has room for heap 1's extra 0x4000
 };
 
 void sub_02015FC8(void) {

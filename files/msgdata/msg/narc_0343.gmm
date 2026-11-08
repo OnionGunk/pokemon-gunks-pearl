@@ -1883,4 +1883,16 @@
 		<attribute name="window_context_name">used</attribute>
 		<language name="English">A fantastic medicine dispensed by the\npharmacy in Cianwood City. It fully\nheals a Pokémon of any ailment.</language>
 	</row>
+	<row id="narc_0343_00465" index="465">
+		<attribute name="window_context_name">used</attribute>
+		<language name="English">A device that shows the Pokémon living\nin an area. Choose one, then press R\nto search for it in the grass.</language>
+	</row>
+	<row id="narc_0343_00466" index="466">
+		<attribute name="window_context_name">used</attribute>
+		<language name="English">A Repel that never runs out. Use it\nto switch it on or off.</language>
+	</row>
+	<row id="narc_0343_00467" index="467">
+		<attribute name="window_context_name">used</attribute>
+		<language name="English">Turn it on to share Exp. Points with\nevery Pokémon in your party.</language>
+	</row>
 </body>

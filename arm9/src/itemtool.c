@@ -666,6 +666,9 @@ static const u16 sItemIndexMappings[][4] = {
     { 439, 421, 422, 0   },
     { 440, 598, 599, 285 },
     { 441, 600, 601, 0   },
+    { 442, 697, 698, 0   }, // Gunk's: DexNav (Poke Radar icon)
+    { 443, 697, 698, 0   }, // Gunk's: Endless Repel
+    { 444, 697, 698, 0   }, // Gunk's: Exp. All
 };
 
 void MoveItemSlotInList(struct ItemSlot *itemSlots, u16 from, u16 to) {
@@ -999,7 +1002,7 @@ u8 ItemIsBitter(u16 item_id) {
 }
 
 struct ItemData *LoadAllItemData(enum HeapID heapID) {
-    return AllocAndReadFromNarcMemberByIdPair(NARC_ITEMTOOL_ITEMDATA_ITEM_DATA, 0, heapID, 0, sizeof(struct ItemData) * GetItemIndexMapping(ITEM_SECRETPOTION, 0));
+    return AllocAndReadFromNarcMemberByIdPair(NARC_ITEMTOOL_ITEMDATA_ITEM_DATA, 0, heapID, 0, sizeof(struct ItemData) * GetItemIndexMapping(ITEM_GUNK_LAST, 0));
 }
 
 struct ItemData *GetItemDataPtrFromArray(struct ItemData *a0, u16 item_id) {

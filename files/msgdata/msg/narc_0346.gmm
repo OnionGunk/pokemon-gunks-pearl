@@ -1860,4 +1860,16 @@
 		<attribute name="window_context_name">used</attribute>
 		<language name="English">a {COLOR 255}SecretPotion{COLOR 0}</language>
 	</row>
+	<row id="narc_0346_00465" index="465">
+		<attribute name="window_context_name">used</attribute>
+		<language name="English">a {COLOR 255}DexNav{COLOR 0}</language>
+	</row>
+	<row id="narc_0346_00466" index="466">
+		<attribute name="window_context_name">used</attribute>
+		<language name="English">an {COLOR 255}Endless Repel{COLOR 0}</language>
+	</row>
+	<row id="narc_0346_00467" index="467">
+		<attribute name="window_context_name">used</attribute>
+		<language name="English">an {COLOR 255}Exp. All{COLOR 0}</language>
+	</row>
 </body>

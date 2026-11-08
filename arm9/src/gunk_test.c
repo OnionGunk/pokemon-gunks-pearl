@@ -61,6 +61,7 @@ void Gunk_TestNewGame(struct SaveData *save) {
 
     // Master Balls for catching in the legality tests
     Bag_AddItem(Save_Bag_Get(save), ITEM_MASTER_BALL, 99, (enum HeapID)77);
+    Bag_AddItem(Save_Bag_Get(save), ITEM_DEXNAV, 1, (enum HeapID)77);
 
     if (gGunkTestSpecies != 0) {
         struct Pokemon *mon = AllocMonZeroed((enum HeapID)77); // the new-game overlay's heap

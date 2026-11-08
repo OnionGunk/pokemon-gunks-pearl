@@ -31,6 +31,7 @@ UNK_020F7260: ; 0x020F7260
 	.word sub_0205D9A8, 0x00000000, 0x00000000
 	.word sub_0205DA3C, 0x00000000, sub_0205DA80
 	.word sub_0205DACC, sub_0205DADC, sub_0205DAEC
+	.word GunkDexNav_ItemBagUse, GunkDexNav_ItemFieldUse, GunkDexNav_ItemCheck ; 23: Gunk's DexNav
 
 	.text
 

@@ -687,6 +687,11 @@
 #define ITEM_COUPON_3     462
 #define ITEM_STORAGE_KEY  463
 #define ITEM_SECRETPOTION 464
+// Gunk's Diamond key items
+#define ITEM_DEXNAV        465
+#define ITEM_ENDLESS_REPEL 466
+#define ITEM_EXP_ALL       467
+#define ITEM_GUNK_LAST     ITEM_EXP_ALL
 
 #define TM_FOCUS_PUNCH  ITEM_TM01
 #define TM_DRAGON_CLAW  ITEM_TM02

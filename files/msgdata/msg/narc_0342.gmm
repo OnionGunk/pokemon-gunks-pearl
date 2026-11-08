@@ -2325,4 +2325,19 @@
 		<language name="English"></language>
 		<language name="日本語">XXX</language>
 	</row>
+	<row id="narc_0342_00465" index="465">
+		<attribute name="window_context_name">garbage</attribute>
+		<language name="English"></language>
+		<language name="日本語">XXX</language>
+	</row>
+	<row id="narc_0342_00466" index="466">
+		<attribute name="window_context_name">garbage</attribute>
+		<language name="English"></language>
+		<language name="日本語">XXX</language>
+	</row>
+	<row id="narc_0342_00467" index="467">
+		<attribute name="window_context_name">garbage</attribute>
+		<language name="English"></language>
+		<language name="日本語">XXX</language>
+	</row>
 </body>

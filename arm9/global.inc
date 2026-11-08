@@ -9364,3 +9364,6 @@
 .extern Gunk_FieldInputProcess
 .extern Gunk_FieldStepEncounter
 .extern Gunk_FieldExit
+.extern GunkDexNav_ItemBagUse
+.extern GunkDexNav_ItemFieldUse
+.extern GunkDexNav_ItemCheck

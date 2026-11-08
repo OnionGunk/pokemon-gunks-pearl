@@ -1205,3 +1205,39 @@ void GunkDexNav_OpenScreen(FieldSystem *fieldSystem) {
     MI_CpuClear8(task, sizeof(DexNavScreenTask));
     FieldSystem_CreateTask(fieldSystem, Task_DexNavScreen, task);
 }
+
+// ---- the DexNav key item (item use table entry 23, asm/unk_0205CE48.s) ----
+
+extern void StartMenu_SetExitTaskFunc(void *startMenu, TaskFunc func);
+extern BOOL sub_02036A78(TaskManager *taskManager); // frees the app's data and reopens the Bag
+
+typedef struct ItemUseContext {
+    TaskManager *taskManager;
+} ItemUseContext;
+
+void GunkDexNav_ItemBagUse(ItemUseContext *context);
+BOOL GunkDexNav_ItemFieldUse(FieldSystem **context);
+int GunkDexNav_ItemCheck(u32 *context);
+
+// From the Bag: like the Town Map, the screen opens over the Bag and B returns to it.
+void GunkDexNav_ItemBagUse(ItemUseContext *context) {
+    FieldSystem *fieldSystem = TaskManager_GetFieldSystem(context->taskManager);
+    u8 *startMenu = TaskManager_GetEnvironment(context->taskManager);
+    DexNavData *data = Heap_AllocAtEnd(HEAP_ID_FIELD, sizeof(DexNavData));
+
+    GunkDexNav_BuildAreaData(fieldSystem, data);
+    sub_020373D4(fieldSystem, (struct OverlayManagerTemplate *)&sDexNavAppTemplate, data);
+    *(void **)(startMenu + 0x1F8) = data;
+    StartMenu_SetExitTaskFunc(startMenu, sub_02036A78);
+}
+
+// Registered to Select: straight from the field.
+BOOL GunkDexNav_ItemFieldUse(FieldSystem **context) {
+    GunkDexNav_OpenScreen(*context);
+    return FALSE;
+}
+
+// usable anywhere in the field (2: not now, as the Poke Radar answers in the Underground)
+int GunkDexNav_ItemCheck(u32 *context) {
+    return context[1] == 1 ? 2 : 0;
+}

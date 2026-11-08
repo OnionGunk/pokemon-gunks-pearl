@@ -2,6 +2,8 @@
 	.include "global.inc"
 
 	.extern gSystem
+	.extern Gunk_RegisteredItemToUse
+	.extern Gunk_RegisteredItemLastUsed
 	.extern UNK_020F96DC
 
 	.section .rodata
@@ -1390,7 +1392,7 @@ sub_0205D8B8: ; 0x0205D8B8
 	ldr r0, [r5, #0x0]
 	ldr r0, [r0, #0xc]
 	bl Save_Bag_Get
-	bl Bag_GetRegisteredItem
+	bl Gunk_RegisteredItemLastUsed ; Gunk: the item that was just used
 	add r2, r0, #0x0
 	ldr r0, [r5, #0x0]
 	lsl r2, r2, #0x10
@@ -1705,7 +1707,7 @@ _0205DB54:
 _0205DB66:
 	ldr r0, [r5, #0xc]
 	bl Save_Bag_Get
-	bl Bag_GetRegisteredItem
+	bl Gunk_RegisteredItemToUse ; Gunk: Y item or Select item
 	lsl r0, r0, #0x10
 	lsr r0, r0, #0x10
 	mov r1, #0x6

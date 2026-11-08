@@ -613,6 +613,7 @@ Static arm9
     Object RUNTIME_NITRO_eabi_init.o
     Object gunk_options.o
     Object gunk_battle.o
+    Object gunk_registered_items.o
 }
 
 Autoload ITCM

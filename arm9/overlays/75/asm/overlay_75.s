@@ -2,6 +2,8 @@
 	.include "global.inc"
 
 	.extern Gunk_BagTrySort
+	.extern Bag_IsItemRegistered
+	.extern Bag_UnregisterItem
 	.section .text
 	.balign 4, 0
 
@@ -1797,12 +1799,12 @@ _021E79C6:
 	add r0, r4, #0
 	add r0, #0xc8
 	ldr r0, [r0]
-	bl Bag_GetRegisteredItem
 	ldr r2, [r6]
 	lsl r1, r5, #2
 	ldrh r1, [r2, r1]
-	cmp r1, r0
-	bne _021E7A94
+	bl Bag_IsItemRegistered ; Gunk: two registered items
+	cmp r0, #0
+	beq _021E7A94
 	add r0, r4, #0
 	add r1, r7, #0
 	bl ov75_021EB004
@@ -4219,14 +4221,14 @@ _021E8C84:
 	add r0, r5, #0
 	add r0, #0xc8
 	ldr r0, [r0]
-	bl Bag_GetRegisteredItem
 	add r1, r5, #0
 	add r1, #0xc4
 	ldr r1, [r1]
 	add r1, #0x66
 	ldrh r1, [r1]
-	cmp r1, r0
-	bne _021E8CAC
+	bl Bag_IsItemRegistered ; Gunk: two registered items
+	cmp r0, #0
+	beq _021E8CAC
 	mov r1, #7
 	b _021E8CAE
 _021E8CAC:
@@ -5638,8 +5640,12 @@ ov75_021E97E4: ; 0x021E97E4
 	add r4, r0, #0
 	add r0, #0xc8
 	ldr r0, [r0]
-	mov r1, #0
-	bl Bag_SetRegisteredItem
+	add r1, r4, #0
+	add r1, #0xc4
+	ldr r1, [r1]
+	add r1, #0x66
+	ldrh r1, [r1]
+	bl Bag_UnregisterItem ; Gunk: deselect only this item
 	mov r0, #0x57
 	lsl r0, r0, #2
 	ldr r0, [r4, r0]

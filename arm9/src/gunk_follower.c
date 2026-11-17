@@ -222,6 +222,38 @@ static GunkFollowerMoveData *GunkFollower_Data(LocalMapObject *object) {
     return (GunkFollowerMoveData *)sub_020585B0(object);
 }
 
+// The battle (gunk_follower_battle.c): the party slot of the lead when it is walking behind the player, out of its
+// Poke Ball and able to battle, else 0xFF.
+u8 GunkFollower_GetVisibleLeadSlot(FieldSystem *fieldSystem) {
+    LocalMapObject *follower = GunkFollower_Get(fieldSystem);
+    GunkFollowerMoveData *data;
+    struct Party *party;
+    int count;
+
+    if (follower == NULL || GunkFollower_GetLeadSprite(fieldSystem) == 0) {
+        return 0xFF;
+    }
+
+    data = GunkFollower_Data(follower);
+
+    if (data->arriving || data->suppressed || (data->release & FOLLOWER_SCRIPT_HIDDEN) || MapObject_CheckVisible(follower)) {
+        return 0xFF;
+    }
+
+    party = SaveArray_Party_Get(fieldSystem->saveData);
+    count = Party_GetCount(party);
+
+    for (int i = 0; i < count; i++) {
+        struct Pokemon *mon = Party_GetMonByIndex(party, i);
+
+        if (!GetMonData(mon, MON_DATA_IS_EGG, NULL) && GetMonData(mon, MON_DATA_HP, NULL) != 0) {
+            return i;
+        }
+    }
+
+    return 0xFF;
+}
+
 static LocalMapObject *GunkFollower_PlayerObject(LocalMapObject *object) {
     return PlayerAvatar_GetMapObject(FieldSystem_GetPlayerAvatar(MapObject_GetFieldSystem(object)));
 }

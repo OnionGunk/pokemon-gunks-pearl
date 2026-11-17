@@ -4,6 +4,7 @@
 #include "global.h"
 #include "field_system.h"
 #include "map_object.h"
+#include "battle_setup.h"
 
 // Gunk's Pokemon follower, stage 1 (C:\Projects\diamond-tools\notes\followers_plan.md):
 // the party lead walks behind the player, drawn with HeartGold's overworld sprite of that Pokemon.
@@ -41,6 +42,13 @@ void GunkFollower_WhilePaused(LocalMapObject *object);
 
 // Gunk_FieldInputProcess, before the vanilla input: A on the follower plays its cry and shows a short line.
 BOOL GunkFollower_TryTalk(void *input, FieldSystem *fieldSystem);
+
+// The party slot of the lead while it walks visibly behind the player, else 0xFF (the battle's walk-in).
+u8 GunkFollower_GetVisibleLeadSlot(FieldSystem *fieldSystem);
+
+// Task_StartBattle (src/encounter.c), before the battle starts: the follower walks into a single battle
+// instead of coming out of a Poke Ball (src/gunk_follower_battle.c).
+void GunkBattle_Arm(BattleSetup *setup, FieldSystem *fieldSystem);
 
 // Wraps the object-at-tile collision check (vanilla now sub_0205995C_Vanilla): the player never collides with
 // the follower.

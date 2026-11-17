@@ -8,6 +8,7 @@
 #include "constants/maps.h"
 #include "constants/pokemon.h"
 #include "constants/species.h"
+#include "constants/sndseq.h"
 
 #include "field_system.h"
 #include "map_object.h"
@@ -254,6 +255,39 @@ u8 GunkFollower_GetVisibleLeadSlot(FieldSystem *fieldSystem) {
     return 0xFF;
 }
 
+// ---- object slots (cross-hack fix #10): the follower must never take a slot the map needs
+//
+// The map's objects are built from its object events, and its scripts add more of them later (hidden ones that
+// appear in a scene), so every event needs a free slot at any time. The follower, its Poke Ball and its bubble
+// (3 objects) are only created when all of the map's events, the player and those 3 fit into the manager's slots
+// (64), and a slot is left over after the new one (objects that other code adds, e.g. Amity Square's Pokemon).
+// When there's no room, the follower simply isn't there (or the ball/bubble isn't shown); nothing crashes.
+// Vanilla Diamond's largest map has 51 object events, so this never hides the follower in the story.
+
+#define FOLLOWER_OBJECTS 3 // the follower, its Poke Ball, its emote bubble
+
+static BOOL GunkFollower_HasObjectRoom(FieldSystem *fieldSystem) {
+    MapObjectManager *manager = fieldSystem->mapObjectManager;
+    u32 slots = MapObjectManager_GetObjectCount(manager);
+    LocalMapObject *objects = MapObjectManager_GetObjects(manager);
+    u8 *mapEvents = *(u8 **)((u8 *)fieldSystem + 0x14); // FieldSystem +0x14: the map's events (+4: object event count)
+    u32 eventCount = mapEvents != NULL ? *(u32 *)(mapEvents + 4) : 0;
+    u32 active = 0;
+    u32 i;
+
+    if (eventCount + 1 + FOLLOWER_OBJECTS > slots) {
+        return FALSE;
+    }
+
+    for (i = 0; i < slots; i++) {
+        if (MapObject_CheckActive(&objects[i])) {
+            active++;
+        }
+    }
+
+    return active + 2 <= slots;
+}
+
 static LocalMapObject *GunkFollower_PlayerObject(LocalMapObject *object) {
     return PlayerAvatar_GetMapObject(FieldSystem_GetPlayerAvatar(MapObject_GetFieldSystem(object)));
 }
@@ -294,6 +328,7 @@ typedef struct GunkFollowerBall {
     MapObjectManager *manager;
     LocalMapObject *ball;
     LocalMapObject *follower;
+    SysTask *task;
     u16 frame;
     u8 release;
 } GunkFollowerBall;
@@ -360,7 +395,9 @@ static void GunkFollower_PlayBall(LocalMapObject *follower, BOOL release) {
         return;
     }
 
-    ball = MapObject_Create(fieldSystem->mapObjectManager, MapObject_GetXCoord(follower), MapObject_GetZCoord(follower), 1, SPRITE_POKE_BALL, 0, MAP_NOTHING);
+    ball = GunkFollower_HasObjectRoom(fieldSystem)
+        ? MapObject_Create(fieldSystem->mapObjectManager, MapObject_GetXCoord(follower), MapObject_GetZCoord(follower), 1, SPRITE_POKE_BALL, 0, MAP_NOTHING)
+        : NULL;
 
     if (ball == NULL) {
         if (release) {
@@ -387,11 +424,170 @@ static void GunkFollower_PlayBall(LocalMapObject *follower, BOOL release) {
     anim->frame = 0;
     anim->release = release;
     sBall = anim;
-    SysTask_CreateOnMainQueue(Task_GunkFollowerBall, anim, 0);
+    anim->task = SysTask_CreateOnMainQueue(Task_GunkFollowerBall, anim, 0);
+}
+
+// ---- emote bubbles (stage 6): HeartGold's own fuki_* bubbles over the follower
+//
+// Platinum (Following Platinum) draws them with a field effect. Overlay 5's field-effect table can't grow here, so,
+// like the Poke Ball, a bubble is a short-lived map object (ID 0xFA). Its textures are HeartGold's bubbles from the
+// field-effect archive a/1/0/3 (tools/gunk/followers/extract_hg.py), graphics 0x440 + emote
+// (asm/gunk_follower_tables.s). It pops up over the follower's head and pulses through its two frames (HG's own frame
+// sequence) until its time is up or its owner ends it (the talk closing). It keeps animating while the other objects
+// are paused for a message (map object flag 4).
+
+#define GUNK_FOLLOWER_EMOTE_ID   0xFA
+#define EMOTE_FIRST_GFX          0x440
+#define EMOTE_HEIGHT             FX32_CONST(28)  // above a 32x32 follower's feet
+#define EMOTE_TALL_EXTRA         FX32_CONST(24)  // a 64x64 follower
+#define EMOTE_DEPTH              FX32_CONST(2)   // in front of the follower
+#define EMOTE_POP_FRAMES         4               // the pop-up at the start
+#define EMOTE_POP                FX32_CONST(8)
+
+typedef struct GunkFollowerBubble {
+    FieldSystem *fieldSystem;
+    MapObjectManager *manager;
+    LocalMapObject *bubble;
+    LocalMapObject *follower;
+    u16 frame;
+    u16 duration; // 0: until GunkFollower_EndEmote
+    u8 tall;
+    SysTask *task;
+} GunkFollowerBubble;
+
+static GunkFollowerBubble *sEmote; // one at a time
+
+extern const u32 GunkFollower_ModelAnimTable[]; // { graphics ID, model, frame sequence, anims } rows, 0xFFFF ends
+
+static BOOL GunkFollower_IsTallSprite(u32 gfx) {
+    const u32 *row;
+
+    for (row = GunkFollower_ModelAnimTable; row[0] != 0xFFFF; row += 4) {
+        if (row[0] == gfx) {
+            return row[1] != 0; // model 0 = 32x32, 5 = 64x64
+        }
+    }
+
+    return FALSE;
+}
+
+static BOOL GunkFollower_EmoteObjectValid(GunkFollowerBubble *emote, LocalMapObject *object, u32 id) {
+    return emote->fieldSystem->mapObjectManager == emote->manager && MapObject_CheckActive(object) && MapObject_GetID(object) == id;
+}
+
+static void GunkFollower_FreeEmote(GunkFollowerBubble *emote, SysTask *task, BOOL removeBubble) {
+    if (removeBubble) {
+        MapObject_Remove(emote->bubble);
+    }
+
+    Heap_Free(emote);
+    sEmote = NULL;
+    SysTask_Destroy(task);
+}
+
+static void Task_GunkFollowerEmote(SysTask *task, void *data) {
+    GunkFollowerBubble *emote = data;
+    VecFx32 pos, offset;
+
+    if (!GunkFollower_EmoteObjectValid(emote, emote->bubble, GUNK_FOLLOWER_EMOTE_ID)) {
+        // the map's objects were rebuilt meanwhile (a warp): nothing left to clean up
+        GunkFollower_FreeEmote(emote, task, FALSE);
+        return;
+    }
+
+    if (!GunkFollower_EmoteObjectValid(emote, emote->follower, GUNK_FOLLOWER_LOCAL_ID) || MapObject_CheckVisible(emote->follower)
+        || (emote->duration != 0 && emote->frame >= emote->duration)) {
+        GunkFollower_FreeEmote(emote, task, TRUE);
+        return;
+    }
+
+    // ride along over the follower (its drawn position and its bob)
+    MapObject_CopyPositionVector(emote->follower, &pos);
+    MapObject_SetPositionVector(emote->bubble, &pos);
+    sub_02058BA4(emote->follower, &offset);
+    offset.x = 0;
+    offset.y += EMOTE_HEIGHT + (emote->tall ? EMOTE_TALL_EXTRA : 0);
+    offset.z = EMOTE_DEPTH;
+
+    if (emote->frame < EMOTE_POP_FRAMES) {
+        offset.y -= EMOTE_POP * (EMOTE_POP_FRAMES - emote->frame) / EMOTE_POP_FRAMES;
+    }
+
+    sub_02058BB4(emote->bubble, &offset);
+    emote->frame++;
+}
+
+// shows a bubble over the follower; duration 0 keeps it until GunkFollower_EndEmote
+static void GunkFollower_ShowEmote(LocalMapObject *follower, u32 emote, u32 duration) {
+    FieldSystem *fieldSystem = MapObject_GetFieldSystem(follower);
+    GunkFollowerBubble *anim;
+    LocalMapObject *bubble;
+
+    if (sEmote != NULL || emote >= GUNK_FOLLOWER_EMOTE_COUNT || MapObject_CheckVisible(follower) || !GunkFollower_HasObjectRoom(fieldSystem)) {
+        return;
+    }
+
+    bubble = MapObject_Create(fieldSystem->mapObjectManager, MapObject_GetXCoord(follower), MapObject_GetZCoord(follower), 1, EMOTE_FIRST_GFX + emote, 0, MAP_NOTHING);
+
+    if (bubble == NULL) {
+        return; // every object slot is taken: no bubble
+    }
+
+    MapObject_SetID(bubble, GUNK_FOLLOWER_EMOTE_ID);
+    MapObject_SetType(bubble, 0);
+    MapObject_SetEventFlag(bubble, 0);
+    MapObject_SetScriptID(bubble, 0);
+    MapObject_SetFlagsBits(bubble, (MapObjectFlagBits)(MAPOBJECTFLAG_UNK13 | MAPOBJECTFLAG_UNK18 | MAPOBJECTFLAG_UNK4));
+    MapObject_SetFlag19(bubble, TRUE);
+    MapObject_SetFlag29(bubble, TRUE);
+    MapObject_SetPositionFromXYZAndDirection(bubble, MapObject_GetXCoord(follower), MapObject_GetYCoord(follower), MapObject_GetZCoord(follower), 1);
+    sub_02059D1C(bubble);
+
+    anim = Heap_Alloc(HEAP_ID_FIELD, sizeof(GunkFollowerBubble));
+    anim->fieldSystem = fieldSystem;
+    anim->manager = fieldSystem->mapObjectManager;
+    anim->bubble = bubble;
+    anim->follower = follower;
+    anim->frame = 0;
+    anim->duration = (u16)duration;
+    anim->tall = (u8)GunkFollower_IsTallSprite(MapObject_GetSpriteID(follower));
+    sEmote = anim;
+    anim->task = SysTask_CreateOnMainQueue(Task_GunkFollowerEmote, anim, 1);
+    PlaySE(SEQ_SE_DP_SELECT);
+}
+
+// The map's objects are about to be removed and freed (sub_02048B34: a warp, a battle, a menu, a scene ending with
+// a fade). A Poke Ball or bubble still playing would go on touching freed objects (the Platinum bug of a scripted
+// walk ending during a screen effect), so their tasks end here; the objects go with the rest.
+void GunkFollower_OnObjectsDeleted(void) {
+    if (sBall != NULL) {
+        SysTask_Destroy(sBall->task);
+        Heap_Free(sBall);
+        sBall = NULL;
+    }
+
+    if (sEmote != NULL) {
+        SysTask_Destroy(sEmote->task);
+        Heap_Free(sEmote);
+        sEmote = NULL;
+    }
+}
+
+// ends a bubble shown until further notice (its task removes it on the next frame)
+static void GunkFollower_EndEmote(void) {
+    if (sEmote != NULL && sEmote->duration == 0) {
+        sEmote->duration = 1;
+    }
 }
 
 static LocalMapObject *GunkFollower_Spawn(FieldSystem *fieldSystem, u32 sprite, u32 x, s32 y, u32 z, u32 direction, BOOL arriving) {
-    LocalMapObject *object = MapObject_Create(fieldSystem->mapObjectManager, x, z, direction, sprite, GUNK_FOLLOWER_MOVEMENT, MAP_NOTHING);
+    LocalMapObject *object;
+
+    if (!GunkFollower_HasObjectRoom(fieldSystem)) {
+        return NULL; // a crowded map: no follower here
+    }
+
+    object = MapObject_Create(fieldSystem->mapObjectManager, x, z, direction, sprite, GUNK_FOLLOWER_MOVEMENT, MAP_NOTHING);
 
     if (object == NULL) {
         return NULL;
@@ -502,6 +698,60 @@ void GunkFollower_OnObjectsCreated(FieldSystem *fieldSystem) {
     }
 }
 
+// ---- after a battle (stage 6): the follower shows how it feels with a bubble, once it is back on the field
+
+#define EMOTE_AFTER_BATTLE_FRAMES 60
+
+static u8 sEmoteAfterBattle;
+
+void GunkFollower_OnBattleStart(FieldSystem *fieldSystem) {
+    sEmoteAfterBattle = GunkFollower_GetVisibleLeadSlot(fieldSystem) != 0xFF;
+}
+
+static u32 GunkFollower_PickBattleEmote(struct Pokemon *lead) {
+    u32 status = GetMonData(lead, MON_DATA_STATUS, NULL);
+    u32 hp = GetMonData(lead, MON_DATA_HP, NULL);
+    u32 maxHP = GetMonData(lead, MON_DATA_MAX_HP, NULL);
+
+    if (status & (0x08 | 0x80)) {
+        return GUNK_EMOTE_POISON;
+    }
+
+    if (status & 7) {
+        return GUNK_EMOTE_SLEEP;
+    }
+
+    if (status != 0) {
+        return GUNK_EMOTE_CRY;
+    }
+
+    if (hp * 4 <= maxHP) {
+        return GUNK_EMOTE_SWEAT;
+    }
+
+    if (GetMonData(lead, MON_DATA_FRIENDSHIP, NULL) >= 200) {
+        return GUNK_EMOTE_HEART;
+    }
+
+    return (MTRandom() & 1) ? GUNK_EMOTE_HAPPY : GUNK_EMOTE_MUSIC;
+}
+
+static void GunkFollower_EmoteAfterBattle(FieldSystem *fieldSystem, LocalMapObject *follower) {
+    GunkFollowerMoveData *data = GunkFollower_Data(follower);
+    struct Pokemon *lead;
+
+    if (data->arriving || data->suppressed || data->release != 0 || MapObject_CheckVisible(follower) || MapObject_CheckSingleMovement(follower)) {
+        return; // not out yet: try again on a later frame
+    }
+
+    sEmoteAfterBattle = FALSE;
+    lead = GunkFollower_GetLead(fieldSystem);
+
+    if (lead != NULL) {
+        GunkFollower_ShowEmote(follower, GunkFollower_PickBattleEmote(lead), EMOTE_AFTER_BATTLE_FRAMES);
+    }
+}
+
 void GunkFollower_FieldUpdate(FieldSystem *fieldSystem) {
     // No objects are created, removed or re-skinned at run time: that happens only while the map's objects are built
     // (GunkFollower_OnObjectsCreated: after a door or warp, a battle, a menu, loading the game), so no graphics are
@@ -519,6 +769,10 @@ void GunkFollower_FieldUpdate(FieldSystem *fieldSystem) {
     }
 
     data = GunkFollower_Data(follower);
+
+    if (sEmoteAfterBattle) {
+        GunkFollower_EmoteAfterBattle(fieldSystem, follower);
+    }
 
     if ((data->release & FOLLOWER_SCRIPT_HIDDEN) == 0) {
         return;
@@ -893,14 +1147,13 @@ BOOL sub_0205995C(LocalMapObject *object, u32 x, s32 y, u32 z) {
 
 // ---- talking to the follower (stage 3): its cry, a reaction and a line that depend on its mood
 //
-// Platinum (Following Platinum) shows emote bubbles; Diamond has no free field-effect slot for them, so the reactions
-// are movements: a happy hop, a spin, looking around, Diamond's own "!" bubble. All lines are Gunk's own text.
+// A reaction is a movement (a happy hop, a spin, looking around) plus one of HeartGold's emote bubbles over the
+// follower (stage 6), as Platinum (Following Platinum) shows them. All lines are Gunk's own text.
 
 #define ACT_FACE(dir)             (dir)        // 0 N, 1 S, 2 W, 3 E
 #define ACT_JUMP_ON_SPOT_FAST(d)  (48 + (d))
 #define ACT_DELAY_4               62
 #define ACT_DELAY_8               63
-#define ACT_EMOTE_EXCLAMATION     75
 #define ACT_END                   0xFE
 
 enum {
@@ -913,41 +1166,45 @@ enum {
 
 typedef struct GunkFollowerLine {
     u8 reaction;
+    u8 emote;
     const char *text;
 } GunkFollowerLine;
 
 static const GunkFollowerLine sLinesBest[] = {
-    { REACTION_HOP, " is overjoyed to be with you!" },
-    { REACTION_SPIN, " is dancing around happily!" },
-    { REACTION_HOP, " jumps for joy!" },
-    { REACTION_EXCLAIM, " looks at you with total trust!" },
+    { REACTION_HOP, GUNK_EMOTE_HEART, " is overjoyed to be with you!" },
+    { REACTION_SPIN, GUNK_EMOTE_MUSIC, " is dancing around happily!" },
+    { REACTION_HOP, GUNK_EMOTE_HAPPY, " jumps for joy!" },
+    { REACTION_EXCLAIM, GUNK_EMOTE_HEART, " looks at you with total trust!" },
 };
 
 static const GunkFollowerLine sLinesGood[] = {
-    { REACTION_HOP, " is happy to be with you!" },
-    { REACTION_LOOK, " is enjoying the walk." },
-    { REACTION_EXCLAIM, " noticed something!" },
-    { REACTION_CALM, " is humming along." },
+    { REACTION_HOP, GUNK_EMOTE_HAPPY, " is happy to be with you!" },
+    { REACTION_LOOK, GUNK_EMOTE_MUSIC, " is enjoying the walk." },
+    { REACTION_EXCLAIM, GUNK_EMOTE_EXCLAMATION, " noticed something!" },
+    { REACTION_CALM, GUNK_EMOTE_MUSIC, " is humming along." },
 };
 
 static const GunkFollowerLine sLinesOkay[] = {
-    { REACTION_CALM, " is walking along with you." },
-    { REACTION_LOOK, " is looking around." },
+    { REACTION_CALM, GUNK_EMOTE_NEUTRAL, " is walking along with you." },
+    { REACTION_LOOK, GUNK_EMOTE_QUESTION, " is looking around." },
 };
 
 static const GunkFollowerLine sLinesDistant[] = {
-    { REACTION_LOOK, " seems a little distant." },
-    { REACTION_CALM, " is keeping its distance." },
+    { REACTION_LOOK, GUNK_EMOTE_SILENCE, " seems a little distant." },
+    { REACTION_CALM, GUNK_EMOTE_GRUMPY, " is keeping its distance." },
 };
 
-static const GunkFollowerLine sLineTired = { REACTION_CALM, " looks tired..." };
-static const GunkFollowerLine sLineUnwell = { REACTION_LOOK, " doesn't look well..." };
+static const GunkFollowerLine sLineTired = { REACTION_CALM, GUNK_EMOTE_SWEAT, " looks tired..." };
+static const GunkFollowerLine sLineUnwell = { REACTION_LOOK, GUNK_EMOTE_CRY, " doesn't look well..." };
+static const GunkFollowerLine sLineAsleep = { REACTION_CALM, GUNK_EMOTE_SLEEP, " is dozing off..." };
+static const GunkFollowerLine sLinePoisoned = { REACTION_LOOK, GUNK_EMOTE_POISON, " looks pale from the poison..." };
 
 typedef struct GunkFollowerTalk {
     struct String *string;
     u32 animTask;
-    u16 moves[20];
+    u16 moves[2 * 12]; // up to 12 actions with the end marker (the spin uses 11)
     u8 printer;
+    u8 wait;
 } GunkFollowerTalk;
 
 static Window sTalkWindow;
@@ -1007,7 +1264,7 @@ static void GunkFollower_BuildReaction(u16 *moves, u8 reaction, u32 dir) {
         n = GunkFollower_AddMove(moves, n, ACT_DELAY_8);
         break;
     case REACTION_EXCLAIM:
-        n = GunkFollower_AddMove(moves, n, ACT_EMOTE_EXCLAMATION);
+        n = GunkFollower_AddMove(moves, n, ACT_DELAY_4);
         n = GunkFollower_AddMove(moves, n, ACT_JUMP_ON_SPOT_FAST(dir));
         break;
     default:
@@ -1025,8 +1282,17 @@ static const GunkFollowerLine *GunkFollower_PickLine(struct Pokemon *lead) {
     u32 hp = GetMonData(lead, MON_DATA_HP, NULL);
     u32 maxHP = GetMonData(lead, MON_DATA_MAX_HP, NULL);
     u32 roll = MTRandom(); // not the encounter RNG
+    u32 status = GetMonData(lead, MON_DATA_STATUS, NULL);
 
-    if (GetMonData(lead, MON_DATA_STATUS, NULL) != 0) {
+    if (status & 7) { // asleep
+        return &sLineAsleep;
+    }
+
+    if (status & (0x08 | 0x80)) { // poison, bad poison
+        return &sLinePoisoned;
+    }
+
+    if (status != 0) {
         return &sLineUnwell;
     }
 
@@ -1056,6 +1322,12 @@ static BOOL Task_GunkFollowerTalk(TaskManager *taskManager) {
 
     switch (*state) {
     case 0:
+        // let the bubble's graphics set up before the objects are paused (a few frames at most)
+        if (sEmote != NULL && !MapObject_CheckFlag14(sEmote->bubble) && talk->wait < 4) {
+            talk->wait++;
+            break;
+        }
+
         MapObjectManager_PauseAllMovement(fieldSystem->mapObjectManager); // the follower itself keeps animating
         sub_020545B8(fieldSystem->bgConfig, &sTalkWindow, 3);
         sub_02054608(&sTalkWindow, Save_PlayerData_GetOptionsAddr(fieldSystem->saveData));
@@ -1086,6 +1358,7 @@ static BOOL Task_GunkFollowerTalk(TaskManager *taskManager) {
 
         String_Delete(talk->string);
         Heap_Free(talk);
+        GunkFollower_EndEmote();
         MapObjectManager_UnpauseAllMovement(fieldSystem->mapObjectManager);
         return TRUE;
     }
@@ -1132,11 +1405,13 @@ BOOL GunkFollower_TryTalk(void *input, FieldSystem *fieldSystem) {
     line = GunkFollower_PickLine(lead);
     talk = Heap_Alloc(HEAP_ID_FIELD, sizeof(GunkFollowerTalk));
     talk->printer = 0;
+    talk->wait = 0;
     talk->string = String_New(128, HEAP_ID_FIELD);
     GetMonData(lead, MON_DATA_NICKNAME_STRING, talk->string);
     GunkFollower_AppendAscii(talk->string, line->text);
     GunkFollower_BuildReaction(talk->moves, line->reaction, dir);
     talk->animTask = sub_0205AEA4(follower, talk->moves);
+    GunkFollower_ShowEmote(follower, line->emote, 0);
 
     FieldSystem_CreateTask(fieldSystem, Task_GunkFollowerTalk, talk);
     return TRUE;

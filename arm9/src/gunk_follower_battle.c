@@ -104,6 +104,7 @@ void GunkBattle_Task_ShowEncounter(SysTask *task, void *data);
 
 void GunkBattle_Arm(BattleSetup *setup, FieldSystem *fieldSystem) {
     sFollowerSlot = GUNK_BATTLE_NO_FOLLOWER;
+    GunkFollower_OnBattleStart(fieldSystem);
 
     if (setup->flags & (BATTLE_TYPE_DOUBLES | BATTLE_TYPE_LINK | BATTLE_TYPE_MULTI | BATTLE_TYPE_INGAME_PARTNER | BATTLE_TYPE_SAFARI | BATTLE_TYPE_TOWER | BATTLE_TYPE_PAL_PARK | BATTLE_TYPE_TUTORIAL)) {
         return;

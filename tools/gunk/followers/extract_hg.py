@@ -9,6 +9,12 @@ mmodel.narc uses, so they are copied byte for byte:
   HG member 292           -> Diamond mmodel member 414 (narc_0414.bin, walk frame sequence)
   HG member 297 + n       -> Diamond mmodel member 415 + n (narc_<415+n>.NSBTX), n = HG follower index
 Optional first/last limit the sprite range (HG follower indices) while the port is being tested.
+
+The emote bubbles (stage 6) come from HeartGold's field-effect archive a/1/0/3, also byte for byte:
+  HG member 150           -> Diamond mmodel member 981 (narc_0981.bin, the bubble's 2-texture frame sequence)
+  HG member 2 + e         -> Diamond mmodel member 982 + e (narc_<982+e>.NSBTX), e = emote:
+                             fuki_heart, fuki_kao1..5, fuki_onpu, fuki_hatena, fuki_bikkuri, fuki_ase,
+                             fuki_komari, fuki_doku, fuki_chinmoku, fuki_pikon
 """
 import os
 import struct
@@ -23,6 +29,11 @@ HG_SPRITES = 566
 HG_WALK_SEQ = 292
 DP_WALK_SEQ = 414
 DP_FIRST_SPRITE = 415
+HG_EMOTE_SEQ = 150
+HG_FIRST_EMOTE = 2
+HG_EMOTES = 14
+DP_EMOTE_SEQ = 981
+DP_FIRST_EMOTE = 982
 
 
 def rom_file(rom, path):
@@ -87,6 +98,14 @@ def main():
         assert sprite[:4] == b'BTX0', f'HG member {HG_FIRST_SPRITE + n} is not a texture'
         open(os.path.join(OUT, f'narc_{DP_FIRST_SPRITE + n:04d}.NSBTX'), 'wb').write(sprite)
     print(f'copied the walk sequence and HG follower sprites {first}-{last} to {OUT}')
+
+    effects = narc_members(rom_file(rom, 'a/1/0/3'))
+    open(os.path.join(OUT, f'narc_{DP_EMOTE_SEQ:04d}.bin'), 'wb').write(effects[HG_EMOTE_SEQ])
+    for e in range(HG_EMOTES):
+        texture = effects[HG_FIRST_EMOTE + e]
+        assert texture[:4] == b'BTX0' and b'fuki_' in texture, f'HG a/1/0/3 member {HG_FIRST_EMOTE + e} is not an emote'
+        open(os.path.join(OUT, f'narc_{DP_FIRST_EMOTE + e:04d}.NSBTX'), 'wb').write(texture)
+    print(f'copied the emote sequence and {HG_EMOTES} emote bubbles to {OUT}')
 
 
 if __name__ == '__main__':

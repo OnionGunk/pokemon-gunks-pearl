@@ -28,6 +28,12 @@ const BillboardAnim GunkFollower_BillboardAnims[] = {
     { 0, 0, 2 },
 };
 
+// the emote bubbles' frame sequence (mmodel 981, HeartGold's a/1/0/3 member 150): its two textures, 4 frames each
+const BillboardAnim GunkFollower_EmoteAnims[] = {
+    { 0, 15, 0 },
+    { 0, 0, 2 },
+};
+
 // The NPC billboard renderer's own functions (ov05_021F8C68): its work keeps the billboard at +8, where every other
 // reader looks for an object's billboard (ov05_021F0514, used by the reflection over water and others). Stage 1-2
 // used the simple renderer (billboard at +0); the reflection then read garbage and the game hung next to water

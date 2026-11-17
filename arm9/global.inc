@@ -9378,6 +9378,7 @@
 .extern GunkDexNav_ItemFieldUse
 .extern GunkDexNav_ItemCheck
 .extern GunkFollower_OnObjectsCreated
+.extern GunkFollower_OnObjectsDeleted
 .extern GunkFollower_Movement
 .extern GunkFollower_Renderer
 .extern GunkFollower_ObjectDrawUpdate

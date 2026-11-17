@@ -1,6 +1,7 @@
 	.include "asm/macros.inc"
 	.extern GunkFollower_Renderer ; Gunk followers: arm9 copies of the overlay-5 graphics tables of ov05_021F0514.s plus the follower rows (gen_tables.py); overlay 5 keeps its size and its literal pools point here
 	.extern GunkFollower_BillboardAnims
+	.extern GunkFollower_EmoteAnims
 
 
 	.extern ov05_021F8BA0
@@ -59,6 +60,7 @@ GunkFollower_FrameSeqTable: ; was ov05_021F90E4
 	.byte 0x11, 0x00, 0x00, 0x00, 0x9A, 0x01, 0x00, 0x00, 0x12, 0x00, 0x00, 0x00, 0x9B, 0x01, 0x00, 0x00
 	.byte 0x13, 0x00, 0x00, 0x00, 0x9C, 0x01, 0x00, 0x00, 0x14, 0x00, 0x00, 0x00, 0x9D, 0x01, 0x00, 0x00
 	.word 21, 414 ; the HG walk frame sequence (mmodel 414)
+	.word 22, 981 ; the HG emote bubble frame sequence (mmodel 981)
 	.byte 0xFF, 0xFF, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 
 	.balign 4, 0
@@ -258,6 +260,21 @@ GunkFollower_RendererTable: ; was ov05_021F9494
 	.word 0xD1, ov05_021F8D08
 
 	.include "asm/gunk_follower/renderers.inc"
+	; the follower's emote bubbles (HG fuki_*, gfx 0x440 + emote)
+	.word 0x440, ov05_021F8C40 ; fuki_heart
+	.word 0x441, ov05_021F8C40 ; fuki_kao1
+	.word 0x442, ov05_021F8C40 ; fuki_kao2
+	.word 0x443, ov05_021F8C40 ; fuki_kao3
+	.word 0x444, ov05_021F8C40 ; fuki_kao4
+	.word 0x445, ov05_021F8C40 ; fuki_kao5
+	.word 0x446, ov05_021F8C40 ; fuki_onpu
+	.word 0x447, ov05_021F8C40 ; fuki_hatena
+	.word 0x448, ov05_021F8C40 ; fuki_bikkuri
+	.word 0x449, ov05_021F8C40 ; fuki_ase
+	.word 0x44A, ov05_021F8C40 ; fuki_komari
+	.word 0x44B, ov05_021F8C40 ; fuki_doku
+	.word 0x44C, ov05_021F8C40 ; fuki_chinmoku
+	.word 0x44D, ov05_021F8C40 ; fuki_pikon
 	.byte 0xFF, 0xFF, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 
 	.balign 4, 0
@@ -361,6 +378,21 @@ GunkFollower_DetailsTable: ; was ov05_021F9A9C
 	.byte 0xCF, 0x00, 0x00, 0x00, 0x91, 0x04, 0x00, 0x00, 0xD0, 0x00, 0x00, 0x00, 0x91, 0x04, 0x00, 0x00
 	.byte 0xD1, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00
 	.include "asm/gunk_follower/details.inc"
+	; the follower's emote bubbles (HG fuki_*, gfx 0x440 + emote)
+	.word 0x440, 0x1 ; fuki_heart: billboard, no shadow, no reflection
+	.word 0x441, 0x1 ; fuki_kao1: billboard, no shadow, no reflection
+	.word 0x442, 0x1 ; fuki_kao2: billboard, no shadow, no reflection
+	.word 0x443, 0x1 ; fuki_kao3: billboard, no shadow, no reflection
+	.word 0x444, 0x1 ; fuki_kao4: billboard, no shadow, no reflection
+	.word 0x445, 0x1 ; fuki_kao5: billboard, no shadow, no reflection
+	.word 0x446, 0x1 ; fuki_onpu: billboard, no shadow, no reflection
+	.word 0x447, 0x1 ; fuki_hatena: billboard, no shadow, no reflection
+	.word 0x448, 0x1 ; fuki_bikkuri: billboard, no shadow, no reflection
+	.word 0x449, 0x1 ; fuki_ase: billboard, no shadow, no reflection
+	.word 0x44A, 0x1 ; fuki_komari: billboard, no shadow, no reflection
+	.word 0x44B, 0x1 ; fuki_doku: billboard, no shadow, no reflection
+	.word 0x44C, 0x1 ; fuki_chinmoku: billboard, no shadow, no reflection
+	.word 0x44D, 0x1 ; fuki_pikon: billboard, no shadow, no reflection
 	.byte 0xFF, 0xFF, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 
 	.balign 4, 0
@@ -555,6 +587,21 @@ GunkFollower_TextureTable: ; was ov05_021FA0AC
 	.byte 0xCE, 0x00, 0x00, 0x00, 0x75, 0x01, 0x00, 0x00, 0xCF, 0x00, 0x00, 0x00, 0x76, 0x01, 0x00, 0x00
 	.byte 0xD0, 0x00, 0x00, 0x00, 0x77, 0x01, 0x00, 0x00
 	.include "asm/gunk_follower/textures.inc"
+	; the follower's emote bubbles (HG fuki_*, gfx 0x440 + emote)
+	.word 0x440, 982 ; fuki_heart
+	.word 0x441, 983 ; fuki_kao1
+	.word 0x442, 984 ; fuki_kao2
+	.word 0x443, 985 ; fuki_kao3
+	.word 0x444, 986 ; fuki_kao4
+	.word 0x445, 987 ; fuki_kao5
+	.word 0x446, 988 ; fuki_onpu
+	.word 0x447, 989 ; fuki_hatena
+	.word 0x448, 990 ; fuki_bikkuri
+	.word 0x449, 991 ; fuki_ase
+	.word 0x44A, 992 ; fuki_komari
+	.word 0x44B, 993 ; fuki_doku
+	.word 0x44C, 994 ; fuki_chinmoku
+	.word 0x44D, 995 ; fuki_pikon
 	.byte 0xFF, 0xFF, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 
 	.balign 4, 0
@@ -1311,5 +1358,20 @@ GunkFollower_ModelAnimTable: ; was ov05_021FAC6C
 	.byte 0xD0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 	.word ov05_021F8F0C
 	.include "asm/gunk_follower/model_anims.inc"
+	; the follower's emote bubbles (HG fuki_*, gfx 0x440 + emote)
+	.word 0x440, 0, 22, GunkFollower_EmoteAnims ; fuki_heart
+	.word 0x441, 0, 22, GunkFollower_EmoteAnims ; fuki_kao1
+	.word 0x442, 0, 22, GunkFollower_EmoteAnims ; fuki_kao2
+	.word 0x443, 0, 22, GunkFollower_EmoteAnims ; fuki_kao3
+	.word 0x444, 0, 22, GunkFollower_EmoteAnims ; fuki_kao4
+	.word 0x445, 0, 22, GunkFollower_EmoteAnims ; fuki_kao5
+	.word 0x446, 0, 22, GunkFollower_EmoteAnims ; fuki_onpu
+	.word 0x447, 0, 22, GunkFollower_EmoteAnims ; fuki_hatena
+	.word 0x448, 0, 22, GunkFollower_EmoteAnims ; fuki_bikkuri
+	.word 0x449, 0, 22, GunkFollower_EmoteAnims ; fuki_ase
+	.word 0x44A, 0, 22, GunkFollower_EmoteAnims ; fuki_komari
+	.word 0x44B, 0, 22, GunkFollower_EmoteAnims ; fuki_doku
+	.word 0x44C, 0, 22, GunkFollower_EmoteAnims ; fuki_chinmoku
+	.word 0x44D, 0, 22, GunkFollower_EmoteAnims ; fuki_pikon
 	.byte 0xFF, 0xFF, 0x00, 0x00, 0xFF, 0xFF, 0x00, 0x00, 0xFF, 0xFF, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 

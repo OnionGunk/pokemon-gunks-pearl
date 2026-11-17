@@ -105,6 +105,7 @@ void Gunk_TestNewGame(struct SaveData *save) {
     if (Bag_GetRegisteredItem(Save_Bag_Get(save)) == ITEM_NONE) {
         Bag_SetRegisteredItem(Save_Bag_Get(save), ITEM_BICYCLE);
     }
+    Bag_AddItem(Save_Bag_Get(save), ITEM_HONEY, 3, (enum HeapID)77); // Pearl: honey tree test
 
     if (gGunkTestSpecies != 0) {
         struct Pokemon *mon = AllocMonZeroed((enum HeapID)77); // the new-game overlay's heap

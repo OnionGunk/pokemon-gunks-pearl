@@ -1310,4 +1310,5 @@ CMDS.update({
     722: {'name': 'ScrCmd_Gunk_UseRepelAgain', 'args': [], 'src': 'gunk_qol.c', 'conditional': False, 'notes': []},
     723: {'name': 'ScrCmd_Gunk_ToggleEndlessRepel', 'args': ['p'], 'src': 'gunk_qol.c', 'conditional': False, 'notes': []},
     724: {'name': 'ScrCmd_Gunk_ToggleExpAll', 'args': ['p'], 'src': 'gunk_qol.c', 'conditional': False, 'notes': []},
+    725: {'name': 'ScrCmd_Gunk_HoneyTreeHours', 'args': ['p'], 'src': 'gunk_qol.c', 'conditional': False, 'notes': []},
 })

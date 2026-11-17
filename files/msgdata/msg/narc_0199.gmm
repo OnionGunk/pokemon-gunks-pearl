@@ -601,4 +601,8 @@
 		<attribute name="window_context_name">used</attribute>
 		<language name="English">Come back any time!</language>
 	</row>
+	<row id="narc_0199_00147" index="147">
+		<attribute name="window_context_name">used</attribute>
+		<language name="English">The bark is slathered with Honey...\rPokémon should gather here in about\n{STRVAR_1 51, 0} hour(s).</language>
+	</row>
 </body>

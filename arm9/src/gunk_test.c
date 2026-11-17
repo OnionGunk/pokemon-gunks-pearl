@@ -100,6 +100,11 @@ void Gunk_TestNewGame(struct SaveData *save) {
     Bag_AddItem(Save_Bag_Get(save), ITEM_EXP_ALL, 1, (enum HeapID)77);
     Bag_AddItem(Save_Bag_Get(save), ITEM_REPEL, 3, (enum HeapID)77);
     Bag_AddItem(Save_Bag_Get(save), ITEM_POKE_BALL, 5, (enum HeapID)77); // Pearl: a second ball type for Quick Ball
+    // followers: the Bicycle on Y, for the mount/dismount test (emu/follow_diag.py bike)
+    Bag_AddItem(Save_Bag_Get(save), ITEM_BICYCLE, 1, (enum HeapID)77);
+    if (Bag_GetRegisteredItem(Save_Bag_Get(save)) == ITEM_NONE) {
+        Bag_SetRegisteredItem(Save_Bag_Get(save), ITEM_BICYCLE);
+    }
 
     if (gGunkTestSpecies != 0) {
         struct Pokemon *mon = AllocMonZeroed((enum HeapID)77); // the new-game overlay's heap

@@ -5,8 +5,8 @@
 #include "map_object.h"
 
 // Gunk's Pokemon follower renderer. Every follower graphics ID (0x200 + HeartGold follower index) uses it
-// (asm/gunk_follower/renderers.inc). It lives in the arm9 static module: overlay 5 must keep its exact size. It is the simple billboard renderer of ov05_021F1B0C.s
-// (= Platinum's ov5_021ECA70.c, which the Platinum hack's follower renderer extends) with its own update:
+// (asm/gunk_follower/renderers.inc). It lives in the arm9 static module: overlay 5 must keep its exact size. It is the
+// NPC billboard renderer of ov05_021F0514.s (ov05_021F8C68) with its own update:
 // - the animation follows the facing direction (HeartGold's sheets: 4 loops of 2 frames, one per direction),
 // - it always animates, so the Pokemon walks in place while it stands,
 // - a 2 px bob every 5 frames (as Following Platinum / the Platinum hack),
@@ -28,11 +28,16 @@ const BillboardAnim GunkFollower_BillboardAnims[] = {
     { 0, 0, 2 },
 };
 
-extern void ov05_021F1B0C(LocalMapObject *object); // init: work = { billboard, ... }, sprite offset 0
-extern void ov05_021F1B58(LocalMapObject *object); // delete
-extern void ov05_021F1B60(LocalMapObject *object); // pause
-extern void ov05_021F1B8C(LocalMapObject *object); // refresh
-extern void ov05_021F1C48(LocalMapObject *object); // billboard position from the object + draw flag
+// The NPC billboard renderer's own functions (ov05_021F8C68): its work keeps the billboard at +8, where every other
+// reader looks for an object's billboard (ov05_021F0514, used by the reflection over water and others). Stage 1-2
+// used the simple renderer (billboard at +0); the reflection then read garbage and the game hung next to water
+// (the "can't move after landing from Surf" freeze), as the Platinum hack's ov5_021EB1A0 fix describes.
+extern void ov05_021F05C4(LocalMapObject *object); // init: work = { u16 last direction, ..., +8 billboard, +0xC saved }
+extern void ov05_021F05F0(LocalMapObject *object); // delete
+extern void ov05_021F0604(LocalMapObject *object); // pause
+extern void ov05_021F0634(LocalMapObject *object); // refresh
+extern void ov05_021F2F48(LocalMapObject *object, void *billboard); // billboard position from the object
+extern void ov05_021F19A4(LocalMapObject *object, void *billboard); // draw flag (hidden objects aren't drawn)
 extern BOOL ov05_021F2E28(LocalMapObject *object); // flag 22: graphics off
 
 // billboard (arm9 asm/unk_0201F06C.s; Platinum billboard.c names)
@@ -50,15 +55,15 @@ static void GunkFollower_RenderUpdate(LocalMapObject *object);
 static const u8 sShinyPlttIdx[16] = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
 
 const UnkLMOCallbackStruct2 GunkFollower_Renderer = {
-    ov05_021F1B0C,
+    ov05_021F05C4,
     GunkFollower_RenderUpdate,
-    ov05_021F1B58,
-    ov05_021F1B60,
-    ov05_021F1B8C,
+    ov05_021F05F0,
+    ov05_021F0604,
+    ov05_021F0634,
 };
 
 static void GunkFollower_RenderUpdate(LocalMapObject *object) {
-    void *billboard = *(void **)sub_02058628(object);
+    void *billboard = *(void **)(sub_02058628(object) + 8);
     VecFx32 offset;
 
     if (ov05_021F2E28(object) == TRUE || billboard == NULL) {
@@ -77,7 +82,8 @@ static void GunkFollower_RenderUpdate(LocalMapObject *object) {
     offset.z = 0;
     sub_02058BB4(object, &offset); // the object's sprite offset (Platinum MapObject_SetSpritePosOffset)
 
-    ov05_021F1C48(object);
+    ov05_021F2F48(object, billboard);
+    ov05_021F19A4(object, billboard);
 }
 
 // ---- the per-frame graphics update of every object: ov05_021F1D8C's callers (map_object.c sub_02058348,

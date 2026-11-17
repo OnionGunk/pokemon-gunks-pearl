@@ -89,6 +89,7 @@ extern void FieldSystem_GetFacingObject(FieldSystem *fieldSystem, LocalMapObject
 extern void ClearFrameAndWindow2(struct Window *window, BOOL param1);
 
 static void GunkFollower_MoveInit(LocalMapObject *object);
+static BOOL GunkFollower_PlayerIsMoving(LocalMapObject *player);
 static void GunkFollower_MoveUpdate(LocalMapObject *object);
 
 const UnkLMOCallbackStruct GunkFollower_Movement = {
@@ -261,10 +262,10 @@ static LocalMapObject *GunkFollower_Spawn(FieldSystem *fieldSystem, u32 sprite, 
     return object;
 }
 
-// Surf (and Waterfall), the bike, Rock Climb, a partner walking with the player: no follower object at all. The Surf
-// hop never started with the follower object present (stage 1, not tracked down), so as the Platinum hack recalls it
-// to its Poke Ball, it is removed (ScrCmd_Surf / RockClimb / Waterfall call GunkFollower_OnFieldMove first) and
-// spawned again once the player is back on foot.
+// Surf (and Waterfall), the bike, Rock Climb, a partner walking with the player: the follower hides and waits where
+// it is (ScrCmd_Surf / RockClimb / Waterfall hide it before their field task, GunkFollower_OnFieldMove) and comes
+// back hidden on the player's tile once the player is on foot again (GunkFollower_UpdateSuppressed). The object
+// itself stays, so nothing is created or loaded while the field runs.
 static BOOL GunkFollower_IsFieldSuppressed(FieldSystem *fieldSystem, BOOL checkTile) {
     s32 state = PlayerAvatar_GetState(fieldSystem->playerAvatar);
     LocalMapObject *player;
@@ -291,10 +292,19 @@ static BOOL GunkFollower_IsFieldSuppressed(FieldSystem *fieldSystem, BOOL checkT
 
 void GunkFollower_OnFieldMove(FieldSystem *fieldSystem) {
     LocalMapObject *follower = GunkFollower_Get(fieldSystem);
+    GunkFollowerMoveData *data;
 
-    if (follower != NULL) {
-        MapObject_Remove(follower);
+    if (follower == NULL) {
+        return;
     }
+
+    // hidden before the field move's movement starts (the follower is paused with the script); its movement keeps it
+    // hidden and waiting where it is until the player is back on foot (GunkFollower_UpdateSuppressed)
+    data = GunkFollower_Data(follower);
+    data->suppressed = TRUE;
+    data->arriving = FALSE;
+    data->enteringWarp = FALSE;
+    MapObject_SetVisible(follower, TRUE);
 }
 
 static void GunkFollower_SpawnOnPlayer(FieldSystem *fieldSystem, u32 sprite) {
@@ -310,10 +320,6 @@ void GunkFollower_OnObjectsCreated(FieldSystem *fieldSystem) {
 
     // the field's objects exist now: the DexNav Pokétch app (loaded before the first field frame) can read the map
     GunkDexNav_SetFieldSystem(fieldSystem);
-
-    if (GunkFollower_IsFieldSuppressed(fieldSystem, FALSE)) {
-        sprite = 0; // surfing, cycling or with a partner: no follower until the player is back on foot
-    }
 
     if (follower == NULL) {
         if (sprite != 0) {
@@ -339,38 +345,10 @@ void GunkFollower_OnObjectsCreated(FieldSystem *fieldSystem) {
 }
 
 void GunkFollower_FieldUpdate(FieldSystem *fieldSystem) {
-    LocalMapObject *follower;
-    u32 sprite;
-
-    if (fieldSystem->mapObjectManager == NULL || fieldSystem->playerAvatar == NULL) {
-        return;
-    }
-
-    follower = GunkFollower_Get(fieldSystem);
-    sprite = GunkFollower_IsFieldSuppressed(fieldSystem, TRUE) ? 0 : GunkFollower_GetLeadSprite(fieldSystem);
-
-    if (follower == NULL) {
-        if (sprite != 0) {
-            GunkFollower_SpawnOnPlayer(fieldSystem, sprite);
-        }
-        return;
-    }
-
-    if (sprite == 0) {
-        MapObject_Remove(follower);
-        return;
-    }
-
-    // a new lead (or a shiny one where the last wasn't): swap the graphics the way the script command for object
-    // graphics does; the new billboard starts from the normal palettes again
-    if (!MapObject_CheckSingleMovement(follower)) {
-        BOOL shiny = GunkFollower_IsLeadShiny(fieldSystem);
-
-        if (MapObject_GetSpriteID(follower) != sprite || MapObject_GetParam(follower, GUNK_FOLLOWER_PARAM_SHINY) != shiny) {
-            MapObject_SetParam(follower, shiny, GUNK_FOLLOWER_PARAM_SHINY);
-            sub_02057634(follower, sprite);
-        }
-    }
+    // Nothing at run time: the follower object is only created, removed and given the lead's graphics while the map's
+    // objects are built (GunkFollower_OnObjectsCreated: after a door or warp, a battle, a menu, loading the game), so
+    // no graphics are loaded while the field runs. Surf, the bike and Rock Climb hide it instead of removing it.
+#pragma unused(fieldSystem)
 }
 
 // ---- movement type 55
@@ -587,6 +565,7 @@ static BOOL GunkFollower_StepState(LocalMapObject *object, LocalMapObject *playe
 static void GunkFollower_MoveUpdate(LocalMapObject *object) {
     GunkFollowerMoveData *data = GunkFollower_Data(object);
     LocalMapObject *player;
+
 
     if (sub_0205E5B4(object, data) == FALSE) {
         return;

@@ -26,6 +26,8 @@
 #include "text_02054590.h"
 #include "unk_020051F4.h"
 #include "PAD_pad.h"
+#include "unk_0200CA44.h"
+#include "math_util.h"
 
 // Gunk's Pokemon follower, stage 1. Design: C:\Projects\diamond-tools\notes\followers_plan.md (ported from the
 // Platinum hack's Following Platinum port; the sprites are HeartGold's own, see tools/gunk/followers).
@@ -69,8 +71,12 @@ typedef struct GunkFollowerMoveData {
     u8 arriving;
     u8 enteringWarp; // walking onto the player's warp tile; hides when it gets there
     u8 suppressed;   // hidden and waiting where it is (Surf, bike, Rock Climb, a partner)
-    u8 padding;
+    u8 release;      // FOLLOWER_RELEASE: comes out of its Poke Ball when it next appears;
+                     // FOLLOWER_SCRIPT_HIDDEN: a script moved the player, it went back into its ball (stage 4)
 } GunkFollowerMoveData;
+
+#define FOLLOWER_RELEASE       1
+#define FOLLOWER_SCRIPT_HIDDEN 2
 
 extern BOOL sub_0205E5B4(LocalMapObject *object, GunkFollowerMoveData *data); // TRUE once the player exists
 extern BOOL sub_0205E608(LocalMapObject *object, GunkFollowerMoveData *data); // TRUE if the player left the recorded tile
@@ -87,6 +93,9 @@ extern u32 sub_0205AFDC(u32 direction, u32 action);              // the action t
 extern void sub_0205AE0C(LocalMapObject *object, u32 action);    // starts a movement action
 extern void FieldSystem_GetFacingObject(FieldSystem *fieldSystem, LocalMapObject **object);
 extern void ClearFrameAndWindow2(struct Window *window, BOOL param1);
+extern u32 sub_0205AEA4(LocalMapObject *object, const void *movement); // starts a movement script, returns its task
+extern BOOL sub_0205AEF0(u32 task);                                    // TRUE once the movement script is done
+extern void sub_0205AEFC(u32 task);                                    // ends it
 
 static void GunkFollower_MoveInit(LocalMapObject *object);
 static BOOL GunkFollower_PlayerIsMoving(LocalMapObject *player);
@@ -237,6 +246,118 @@ static void GunkFollower_SetFlags(LocalMapObject *object) {
     MapObject_SetFlag19(object, TRUE);
 }
 
+// ---- the Poke Ball: the follower comes out of it / goes back into it (stage 3)
+//
+// Platinum draws a 3D ball with a field effect; overlay 5's field-effect table can't grow here, so Diamond's own
+// overworld Poke Ball (the item ball sprite) stands in: it appears on the follower's tile, makes a little hop and
+// disappears, while the follower appears (release, with its cry) or has just disappeared (recall). A SysTask runs it;
+// the ball is a short-lived map object (ID 0xFB, never collides, can't be talked to).
+
+#define SPRITE_POKE_BALL       87   // SPRITE_MONSTARBALL
+#define GUNK_FOLLOWER_BALL_ID  0xFB
+#define BALL_FRAMES            20
+
+typedef struct GunkFollowerBall {
+    FieldSystem *fieldSystem;
+    MapObjectManager *manager;
+    LocalMapObject *ball;
+    LocalMapObject *follower;
+    u16 frame;
+    u8 release;
+} GunkFollowerBall;
+
+static GunkFollowerBall *sBall; // one at a time
+
+static BOOL GunkFollower_BallObjectValid(GunkFollowerBall *anim, LocalMapObject *object, u32 id) {
+    return anim->fieldSystem->mapObjectManager == anim->manager && MapObject_CheckActive(object) && MapObject_GetID(object) == id;
+}
+
+static void Task_GunkFollowerBall(SysTask *task, void *data) {
+    GunkFollowerBall *anim = data;
+    VecFx32 offset;
+    s32 t = anim->frame;
+
+    if (!GunkFollower_BallObjectValid(anim, anim->ball, GUNK_FOLLOWER_BALL_ID)) {
+        // the map's objects were rebuilt meanwhile (a warp): nothing left to clean up
+        Heap_Free(anim);
+        sBall = NULL;
+        SysTask_Destroy(task);
+        return;
+    }
+
+    // a hop: up and down over BALL_FRAMES frames, 10 px at the top
+    offset.x = 0;
+    offset.y = (fx32)(FX32_CONST(10) * 4 * t * (BALL_FRAMES - t) / (BALL_FRAMES * BALL_FRAMES));
+    offset.z = 0;
+    sub_02058BB4(anim->ball, &offset);
+
+    if (anim->frame == BALL_FRAMES / 2 && anim->release && GunkFollower_BallObjectValid(anim, anim->follower, GUNK_FOLLOWER_LOCAL_ID)) {
+        struct Pokemon *lead = GunkFollower_GetLead(anim->fieldSystem);
+
+        MapObject_SetVisible(anim->follower, FALSE);
+
+        if (lead != NULL) {
+            sub_02005578((u16)GetMonData(lead, MON_DATA_SPECIES, NULL));
+        }
+    }
+
+    if (++anim->frame <= BALL_FRAMES) {
+        return;
+    }
+
+    MapObject_Remove(anim->ball);
+    Heap_Free(anim);
+    sBall = NULL;
+    SysTask_Destroy(task);
+}
+
+// release: the follower is hidden now and appears halfway through; recall: it hides at once
+static void GunkFollower_PlayBall(LocalMapObject *follower, BOOL release) {
+    FieldSystem *fieldSystem = MapObject_GetFieldSystem(follower);
+    GunkFollowerBall *anim;
+    LocalMapObject *ball;
+
+    if (!release) {
+        MapObject_SetVisible(follower, TRUE);
+    }
+
+    if (sBall != NULL) {
+        if (release) {
+            MapObject_SetVisible(follower, FALSE);
+        }
+        return;
+    }
+
+    ball = MapObject_Create(fieldSystem->mapObjectManager, MapObject_GetXCoord(follower), MapObject_GetZCoord(follower), 1, SPRITE_POKE_BALL, 0, MAP_NOTHING);
+
+    if (ball == NULL) {
+        if (release) {
+            MapObject_SetVisible(follower, FALSE);
+        }
+        return;
+    }
+
+    MapObject_SetID(ball, GUNK_FOLLOWER_BALL_ID);
+    MapObject_SetType(ball, 0);
+    MapObject_SetEventFlag(ball, 0);
+    MapObject_SetScriptID(ball, 0);
+    MapObject_SetFlagsBits(ball, (MapObjectFlagBits)(MAPOBJECTFLAG_UNK13 | MAPOBJECTFLAG_UNK18));
+    MapObject_SetFlag19(ball, TRUE);
+    MapObject_SetFlag29(ball, TRUE);
+    MapObject_SetPositionFromXYZAndDirection(ball, MapObject_GetXCoord(follower), MapObject_GetYCoord(follower), MapObject_GetZCoord(follower), 1);
+    sub_02059D1C(ball);
+
+    anim = Heap_Alloc(HEAP_ID_FIELD, sizeof(GunkFollowerBall));
+    anim->fieldSystem = fieldSystem;
+    anim->manager = fieldSystem->mapObjectManager;
+    anim->ball = ball;
+    anim->follower = follower;
+    anim->frame = 0;
+    anim->release = release;
+    sBall = anim;
+    SysTask_CreateOnMainQueue(Task_GunkFollowerBall, anim, 0);
+}
+
 static LocalMapObject *GunkFollower_Spawn(FieldSystem *fieldSystem, u32 sprite, u32 x, s32 y, u32 z, u32 direction, BOOL arriving) {
     LocalMapObject *object = MapObject_Create(fieldSystem->mapObjectManager, x, z, direction, sprite, GUNK_FOLLOWER_MOVEMENT, MAP_NOTHING);
 
@@ -301,6 +422,11 @@ void GunkFollower_OnFieldMove(FieldSystem *fieldSystem) {
     // hidden before the field move's movement starts (the follower is paused with the script); its movement keeps it
     // hidden and waiting where it is until the player is back on foot (GunkFollower_UpdateSuppressed)
     data = GunkFollower_Data(follower);
+
+    if (!data->suppressed && !data->arriving && !MapObject_CheckVisible(follower)) {
+        GunkFollower_PlayBall(follower, FALSE); // back into its Poke Ball
+    }
+
     data->suppressed = TRUE;
     data->arriving = FALSE;
     data->enteringWarp = FALSE;
@@ -345,10 +471,70 @@ void GunkFollower_OnObjectsCreated(FieldSystem *fieldSystem) {
 }
 
 void GunkFollower_FieldUpdate(FieldSystem *fieldSystem) {
-    // Nothing at run time: the follower object is only created, removed and given the lead's graphics while the map's
-    // objects are built (GunkFollower_OnObjectsCreated: after a door or warp, a battle, a menu, loading the game), so
-    // no graphics are loaded while the field runs. Surf, the bike and Rock Climb hide it instead of removing it.
-#pragma unused(fieldSystem)
+    // No objects are created, removed or re-skinned at run time: that happens only while the map's objects are built
+    // (GunkFollower_OnObjectsCreated: after a door or warp, a battle, a menu, loading the game), so no graphics are
+    // loaded while the field runs. Surf, the bike and Rock Climb hide the follower instead of removing it.
+    //
+    // This runs on every overworld input frame, i.e. only while no script runs: a follower a cutscene put back into
+    // its ball (GunkFollower_OnScriptMovement) comes back here, hidden on the player's tile, and pops out of its
+    // ball once the player steps away.
+    LocalMapObject *follower = GunkFollower_Get(fieldSystem);
+    LocalMapObject *player;
+    GunkFollowerMoveData *data;
+
+    if (follower == NULL || fieldSystem->playerAvatar == NULL) {
+        return;
+    }
+
+    data = GunkFollower_Data(follower);
+
+    if ((data->release & FOLLOWER_SCRIPT_HIDDEN) == 0) {
+        return;
+    }
+
+    data->release &= ~FOLLOWER_SCRIPT_HIDDEN;
+
+    if (data->suppressed) {
+        return; // surfing or cycling now: the suppression brings it back
+    }
+
+    player = PlayerAvatar_GetMapObject(fieldSystem->playerAvatar);
+    MapObject_SetPositionFromXYZAndDirection(follower, MapObject_GetXCoord(player), MapObject_GetYCoord(player), MapObject_GetZCoord(player), MapObject_GetFacingDirection(player));
+    sub_02059D1C(follower);
+    GunkFollower_SetArriving(follower);
+    data->release |= FOLLOWER_RELEASE;
+    data->state = 0;
+    MapObject_ClearSingleMovement(follower);
+    sub_0205E63C(follower, data);
+}
+
+// A script moves the player (ScrCmd ApplyMovement on object 0xFF, src/scrcmd.c): cutscenes walk the player around
+// while every other object, the follower too, is paused, so the follower goes back into its Poke Ball for the
+// scene (as Platinum's cutscene scripts do) and comes back when the script has ended (GunkFollower_FieldUpdate).
+void GunkFollower_OnScriptMovement(FieldSystem *fieldSystem, LocalMapObject *object) {
+    LocalMapObject *follower = GunkFollower_Get(fieldSystem);
+    GunkFollowerMoveData *data;
+
+    if (follower == NULL || fieldSystem->playerAvatar == NULL || object != PlayerAvatar_GetMapObject(fieldSystem->playerAvatar)) {
+        return;
+    }
+
+    data = GunkFollower_Data(follower);
+
+    if (data->release & FOLLOWER_SCRIPT_HIDDEN) {
+        return;
+    }
+
+    data->release |= FOLLOWER_SCRIPT_HIDDEN;
+
+    if (!data->suppressed && !data->arriving && !MapObject_CheckVisible(follower)) {
+        GunkFollower_PlayBall(follower, FALSE);
+    } else {
+        MapObject_SetVisible(follower, TRUE);
+    }
+
+    data->arriving = FALSE;
+    data->enteringWarp = FALSE;
 }
 
 // ---- movement type 55
@@ -423,6 +609,10 @@ static BOOL GunkFollower_IsSuppressed(LocalMapObject *object) {
 static BOOL GunkFollower_UpdateSuppressed(LocalMapObject *object, LocalMapObject *player, GunkFollowerMoveData *data) {
     if (GunkFollower_IsSuppressed(object)) {
         if (!data->suppressed) {
+            if (!data->arriving && !MapObject_CheckVisible(object)) {
+                GunkFollower_PlayBall(object, FALSE); // the bike: back into its Poke Ball
+            }
+
             data->suppressed = TRUE;
             data->arriving = FALSE;
             data->enteringWarp = FALSE;
@@ -444,6 +634,7 @@ static BOOL GunkFollower_UpdateSuppressed(LocalMapObject *object, LocalMapObject
     MapObject_SetPositionFromXYZAndDirection(object, MapObject_GetXCoord(player), MapObject_GetYCoord(player), MapObject_GetZCoord(player), MapObject_GetFacingDirection(player));
     sub_02059D1C(object);
     GunkFollower_SetArriving(object);
+    data->release |= FOLLOWER_RELEASE; // pops out of its Poke Ball once it can be seen
     sub_0205E63C(object, data);
     return TRUE;
 }
@@ -541,7 +732,13 @@ static void GunkFollower_UpdateArrival(LocalMapObject *object, LocalMapObject *p
     }
 
     data->arriving = FALSE;
-    MapObject_SetVisible(object, FALSE);
+
+    if (data->release & FOLLOWER_RELEASE) {
+        data->release &= ~FOLLOWER_RELEASE;
+        GunkFollower_PlayBall(object, TRUE);
+    } else {
+        MapObject_SetVisible(object, FALSE);
+    }
 }
 
 static BOOL GunkFollower_StepState(LocalMapObject *object, LocalMapObject *player, GunkFollowerMoveData *data) {
@@ -662,10 +859,62 @@ BOOL sub_0205995C(LocalMapObject *object, u32 x, s32 y, u32 z) {
     return ret;
 }
 
-// ---- talking to the follower (stage 2): its cry and a short line
+// ---- talking to the follower (stage 3): its cry, a reaction and a line that depend on its mood
+//
+// Platinum (Following Platinum) shows emote bubbles; Diamond has no free field-effect slot for them, so the reactions
+// are movements: a happy hop, a spin, looking around, Diamond's own "!" bubble. All lines are Gunk's own text.
+
+#define ACT_FACE(dir)             (dir)        // 0 N, 1 S, 2 W, 3 E
+#define ACT_JUMP_ON_SPOT_FAST(d)  (48 + (d))
+#define ACT_DELAY_4               62
+#define ACT_DELAY_8               63
+#define ACT_EMOTE_EXCLAMATION     75
+#define ACT_END                   0xFE
+
+enum {
+    REACTION_CALM,
+    REACTION_HOP,
+    REACTION_SPIN,
+    REACTION_LOOK,
+    REACTION_EXCLAIM,
+};
+
+typedef struct GunkFollowerLine {
+    u8 reaction;
+    const char *text;
+} GunkFollowerLine;
+
+static const GunkFollowerLine sLinesBest[] = {
+    { REACTION_HOP, " is overjoyed to be with you!" },
+    { REACTION_SPIN, " is dancing around happily!" },
+    { REACTION_HOP, " jumps for joy!" },
+    { REACTION_EXCLAIM, " looks at you with total trust!" },
+};
+
+static const GunkFollowerLine sLinesGood[] = {
+    { REACTION_HOP, " is happy to be with you!" },
+    { REACTION_LOOK, " is enjoying the walk." },
+    { REACTION_EXCLAIM, " noticed something!" },
+    { REACTION_CALM, " is humming along." },
+};
+
+static const GunkFollowerLine sLinesOkay[] = {
+    { REACTION_CALM, " is walking along with you." },
+    { REACTION_LOOK, " is looking around." },
+};
+
+static const GunkFollowerLine sLinesDistant[] = {
+    { REACTION_LOOK, " seems a little distant." },
+    { REACTION_CALM, " is keeping its distance." },
+};
+
+static const GunkFollowerLine sLineTired = { REACTION_CALM, " looks tired..." };
+static const GunkFollowerLine sLineUnwell = { REACTION_LOOK, " doesn't look well..." };
 
 typedef struct GunkFollowerTalk {
     struct String *string;
+    u32 animTask;
+    u16 moves[20];
     u8 printer;
 } GunkFollowerTalk;
 
@@ -694,6 +943,80 @@ static void GunkFollower_AppendAscii(struct String *dst, const char *src) {
     }
 }
 
+static int GunkFollower_AddMove(u16 *moves, int n, u16 action) {
+    moves[n * 2] = action;
+    moves[n * 2 + 1] = 1;
+    return n + 1;
+}
+
+// the movement script of a reaction, ending facing the player (dir)
+static void GunkFollower_BuildReaction(u16 *moves, u8 reaction, u32 dir) {
+    static const u8 sSpin[4] = { 0, 3, 1, 2 }; // N, E, S, W
+    int n = 0;
+    int i;
+
+    switch (reaction) {
+    case REACTION_HOP:
+        n = GunkFollower_AddMove(moves, n, ACT_JUMP_ON_SPOT_FAST(dir));
+        n = GunkFollower_AddMove(moves, n, ACT_JUMP_ON_SPOT_FAST(dir));
+        break;
+    case REACTION_SPIN:
+        for (i = 0; i < 4; i++) {
+            n = GunkFollower_AddMove(moves, n, ACT_FACE(sSpin[i]));
+            n = GunkFollower_AddMove(moves, n, ACT_DELAY_4);
+        }
+        n = GunkFollower_AddMove(moves, n, ACT_JUMP_ON_SPOT_FAST(dir));
+        break;
+    case REACTION_LOOK:
+        // turn to one side, then the other (N/S <-> W/E)
+        n = GunkFollower_AddMove(moves, n, ACT_FACE(dir < 2 ? 2 : 0));
+        n = GunkFollower_AddMove(moves, n, ACT_DELAY_8);
+        n = GunkFollower_AddMove(moves, n, ACT_FACE(dir < 2 ? 3 : 1));
+        n = GunkFollower_AddMove(moves, n, ACT_DELAY_8);
+        break;
+    case REACTION_EXCLAIM:
+        n = GunkFollower_AddMove(moves, n, ACT_EMOTE_EXCLAMATION);
+        n = GunkFollower_AddMove(moves, n, ACT_JUMP_ON_SPOT_FAST(dir));
+        break;
+    default:
+        n = GunkFollower_AddMove(moves, n, ACT_DELAY_4);
+        break;
+    }
+
+    n = GunkFollower_AddMove(moves, n, ACT_FACE(dir));
+    moves[n * 2] = ACT_END;
+    moves[n * 2 + 1] = 0;
+}
+
+static const GunkFollowerLine *GunkFollower_PickLine(struct Pokemon *lead) {
+    u32 friendship = GetMonData(lead, MON_DATA_FRIENDSHIP, NULL);
+    u32 hp = GetMonData(lead, MON_DATA_HP, NULL);
+    u32 maxHP = GetMonData(lead, MON_DATA_MAX_HP, NULL);
+    u32 roll = MTRandom(); // not the encounter RNG
+
+    if (GetMonData(lead, MON_DATA_STATUS, NULL) != 0) {
+        return &sLineUnwell;
+    }
+
+    if (hp * 4 <= maxHP) {
+        return &sLineTired;
+    }
+
+    if (friendship >= 200) {
+        return &sLinesBest[roll % NELEMS(sLinesBest)];
+    }
+
+    if (friendship >= 100) {
+        return &sLinesGood[roll % NELEMS(sLinesGood)];
+    }
+
+    if (friendship >= 50) {
+        return &sLinesOkay[roll % NELEMS(sLinesOkay)];
+    }
+
+    return &sLinesDistant[roll % NELEMS(sLinesDistant)];
+}
+
 static BOOL Task_GunkFollowerTalk(TaskManager *taskManager) {
     FieldSystem *fieldSystem = TaskManager_GetFieldSystem(taskManager);
     GunkFollowerTalk *talk = TaskManager_GetEnvironment(taskManager);
@@ -716,12 +1039,23 @@ static BOOL Task_GunkFollowerTalk(TaskManager *taskManager) {
         if (gSystem.newKeys & (PAD_BUTTON_A | PAD_BUTTON_B)) {
             ClearFrameAndWindow2(&sTalkWindow, FALSE);
             RemoveWindow(&sTalkWindow);
-            String_Delete(talk->string);
-            Heap_Free(talk);
-            MapObjectManager_UnpauseAllMovement(fieldSystem->mapObjectManager);
-            return TRUE;
+            (*state)++;
         }
         break;
+    case 3:
+        // the reaction reads talk->moves: let it finish first
+        if (talk->animTask != 0 && !sub_0205AEF0(talk->animTask)) {
+            break;
+        }
+
+        if (talk->animTask != 0) {
+            sub_0205AEFC(talk->animTask);
+        }
+
+        String_Delete(talk->string);
+        Heap_Free(talk);
+        MapObjectManager_UnpauseAllMovement(fieldSystem->mapObjectManager);
+        return TRUE;
     }
 
     return FALSE;
@@ -732,7 +1066,8 @@ BOOL GunkFollower_TryTalk(void *input, FieldSystem *fieldSystem) {
     LocalMapObject *facing = NULL;
     struct Pokemon *lead;
     GunkFollowerTalk *talk;
-    u32 friendship;
+    const GunkFollowerLine *line;
+    u32 dir;
 
     // FieldInput's first halfword, bit 0: A was pressed and the player may interact (as the vanilla talk check)
     if ((*(u16 *)input & 1) == 0) {
@@ -741,7 +1076,7 @@ BOOL GunkFollower_TryTalk(void *input, FieldSystem *fieldSystem) {
 
     follower = GunkFollower_Get(fieldSystem);
 
-    if (follower == NULL || MapObject_CheckVisible(follower)) {
+    if (follower == NULL || MapObject_CheckVisible(follower) || MapObject_CheckSingleMovement(follower)) {
         return FALSE;
     }
 
@@ -758,22 +1093,18 @@ BOOL GunkFollower_TryTalk(void *input, FieldSystem *fieldSystem) {
     }
 
     // face the player (directions 0 N, 1 S, 2 W, 3 E: the opposite is dir ^ 1)
-    MapObject_SetFacingDirection(follower, PlayerAvatar_GetFacingDirection(fieldSystem->playerAvatar) ^ 1);
+    dir = PlayerAvatar_GetFacingDirection(fieldSystem->playerAvatar) ^ 1;
+    MapObject_SetFacingDirection(follower, dir);
     sub_02005578((u16)GetMonData(lead, MON_DATA_SPECIES, NULL));
 
+    line = GunkFollower_PickLine(lead);
     talk = Heap_Alloc(HEAP_ID_FIELD, sizeof(GunkFollowerTalk));
     talk->printer = 0;
     talk->string = String_New(128, HEAP_ID_FIELD);
     GetMonData(lead, MON_DATA_NICKNAME_STRING, talk->string);
-    friendship = GetMonData(lead, MON_DATA_FRIENDSHIP, NULL);
-
-    if (friendship >= 200) {
-        GunkFollower_AppendAscii(talk->string, " is overjoyed to be with you!");
-    } else if (friendship >= 100) {
-        GunkFollower_AppendAscii(talk->string, " is happy to be with you!");
-    } else {
-        GunkFollower_AppendAscii(talk->string, " is walking along with you.");
-    }
+    GunkFollower_AppendAscii(talk->string, line->text);
+    GunkFollower_BuildReaction(talk->moves, line->reaction, dir);
+    talk->animTask = sub_0205AEA4(follower, talk->moves);
 
     FieldSystem_CreateTask(fieldSystem, Task_GunkFollowerTalk, talk);
     return TRUE;

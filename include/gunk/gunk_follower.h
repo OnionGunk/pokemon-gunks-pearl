@@ -29,6 +29,10 @@ void GunkFollower_OnObjectsCreated(FieldSystem *fieldSystem);
 // switches its sprite when the lead changes, removes it when there's no lead or on excluded maps.
 void GunkFollower_FieldUpdate(FieldSystem *fieldSystem);
 
+// ScrCmd ApplyMovement (src/scrcmd.c), with the object it moves: a script moving the player puts the follower back into
+// its Poke Ball until the script ends.
+void GunkFollower_OnScriptMovement(FieldSystem *fieldSystem, LocalMapObject *object);
+
 // ScrCmd_Surf / RockClimb / Waterfall, before their field task: removes the follower (it comes back on foot).
 void GunkFollower_OnFieldMove(FieldSystem *fieldSystem);
 

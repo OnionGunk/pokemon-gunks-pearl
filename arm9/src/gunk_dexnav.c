@@ -945,6 +945,10 @@ BOOL Gunk_FieldInputProcess(void *input, FieldSystem *fieldSystem) {
     sSearch.playerX = (int)PlayerAvatar_GetXCoord(fieldSystem->playerAvatar);
     sSearch.playerZ = (int)PlayerAvatar_GetZCoord(fieldSystem->playerAvatar);
 
+    if (Gunk_TestWarp(fieldSystem)) { // test builds only
+        return TRUE;
+    }
+
     if (Tick(fieldSystem)) {
         return TRUE;
     }

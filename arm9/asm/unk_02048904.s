@@ -299,6 +299,8 @@ sub_02048AE4: ; 0x02048AE4
 sub_02048B34: ; 0x02048B34
 	push {r4, lr}
 	add r4, r0, #0x0
+	bl GunkFollower_OnObjectsDeleted ; Gunk's: end the follower's Poke Ball / bubble tasks first
+	add r0, r4, #0x0
 	bl sub_0204CC48
 	ldr r0, [r4, #0x38]
 	bl PlayerAvatar_FreeToHeap

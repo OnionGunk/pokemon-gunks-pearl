@@ -3,6 +3,8 @@
 
 	.extern Gunk_BattleMenuInput
 	.extern Gunk_BattlePrompt
+	.extern GunkBattle_ThrowBallSetVisible
+	.extern GunkBattle_Task_ShowEncounter
 	.section .text
 	.balign 4, 0
 
@@ -384,14 +386,14 @@ _0224D774:
 	mov r2, #0
 	add r0, #0x94
 	strh r2, [r0]
-	ldr r0, _0224D878 ; =ov11_0224F2DC
+	ldr r0, _0224D878 ; =GunkBattle_Task_ShowEncounter
 	add r1, r4, #0
 	bl SysTask_CreateOnMainQueue
 	add sp, #0xc
 	pop {r4, r5, r6, r7, pc}
 	.align 2, 0
 _0224D874: .word 0x00000195
-_0224D878: .word ov11_0224F2DC
+_0224D878: .word GunkBattle_Task_ShowEncounter
 
 	thumb_func_start ov11_0224D87C
 ov11_0224D87C: ; 0x0224D87C
@@ -6054,7 +6056,7 @@ _022505FC:
 	mov r1, #1
 	add r0, #0x88
 	ldr r0, [r0]
-	bl ov08_02229FE4
+	bl GunkBattle_ThrowBallSetVisible
 	ldr r1, [r4, #0xc]
 	mov r0, #0x14
 	add r3, r1, #0
@@ -6143,7 +6145,7 @@ _022505FC:
 	add r0, #0x88
 	ldr r0, [r0]
 	mov r1, #1
-	bl ov08_02229FE4
+	bl GunkBattle_ThrowBallSetVisible
 	add r0, r6, #0
 	add r0, #0x88
 	ldr r0, [r0]

@@ -38,6 +38,8 @@ u16 gGunkTestPartner; // Pearl: a second party Pokemon (level 5), e.g. for Exp. 
 u16 gGunkTestShiny; // 1: every DexNav search rolls the shiny path
 u16 gGunkTestBadges; // 1: all eight badges (Surf and the other field moves work)
 u16 gGunkTestMove;   // a move for the lead's first slot (57 = Surf)
+u16 gGunkTestLeadShiny;      // followers: 1 = the lead is shiny
+u16 gGunkTestLeadFriendship; // followers: the lead's friendship (0 = the species' base value)
 u16 gGunkTestFlags[4]; // story flags to set (0 = none), e.g. 0x115 for the Route 202 tutorial
 u16 gGunkTestStrong; // 1: the lead gets 999 in every stat
 
@@ -128,6 +130,11 @@ void Gunk_TestNewGame(struct SaveData *save) {
     Bag_AddItem(Save_Bag_Get(save), ITEM_EXP_ALL, 1, (enum HeapID)77);
     Bag_AddItem(Save_Bag_Get(save), ITEM_REPEL, 3, (enum HeapID)77);
     Bag_AddItem(Save_Bag_Get(save), ITEM_POKE_BALL, 5, (enum HeapID)77); // Pearl: a second ball type for Quick Ball
+    // followers: the Bicycle on Y, for the mount/dismount test (emu/follow_diag.py bike)
+    Bag_AddItem(Save_Bag_Get(save), ITEM_BICYCLE, 1, (enum HeapID)77);
+    if (Bag_GetRegisteredItem(Save_Bag_Get(save)) == ITEM_NONE) {
+        Bag_SetRegisteredItem(Save_Bag_Get(save), ITEM_BICYCLE);
+    }
     Bag_AddItem(Save_Bag_Get(save), ITEM_HONEY, 3, (enum HeapID)77); // Pearl: honey tree test
     Bag_AddItem(Save_Bag_Get(save), ITEM_POKE_RADAR, 1, (enum HeapID)77); // Pearl: radar chain test
 
@@ -135,7 +142,12 @@ void Gunk_TestNewGame(struct SaveData *save) {
         struct Pokemon *mon = AllocMonZeroed((enum HeapID)77); // the new-game overlay's heap
 
         ZeroMonData(mon);
-        CreateMon(mon, gGunkTestSpecies, gGunkTestLevel ? gGunkTestLevel : 50, 32, FALSE, 0, 0, 0);
+        CreateMon(mon, gGunkTestSpecies, gGunkTestLevel ? gGunkTestLevel : 50, 32, gGunkTestLeadShiny != 0, (int)GenerateShinyPersonality(0), 0, 0);
+
+        if (gGunkTestLeadFriendship != 0) {
+            u32 friendship = gGunkTestLeadFriendship;
+            SetMonData(mon, MON_DATA_FRIENDSHIP, &friendship);
+        }
 
         if (gGunkTestMove != 0) {
             u32 move = gGunkTestMove;

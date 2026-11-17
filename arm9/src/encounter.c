@@ -3,6 +3,7 @@
 #include "global.h"
 
 #include "gunk/gunk_dexnav.h"
+#include "gunk/gunk_follower.h"
 
 #include "constants/battle.h"
 #include "constants/game_stats.h"
@@ -92,6 +93,7 @@ static BOOL Task_StartBattle(TaskManager *taskManager) {
 
     switch (*state) {
     case 0:
+        GunkBattle_Arm(battleSetup, fieldSystem);
         sub_0203780C(fieldSystem, battleSetup);
         (*state)++;
         break;

@@ -1514,6 +1514,7 @@ BOOL ScrCmd_Unk005E(ScriptContext *ctx) { // 005E - todo: ApplyMovement?
 
     LocalMapObject *event = sub_0203B120(ctx->fieldSystem, unk);
     GF_ASSERT(event);
+    GunkFollower_OnScriptMovement(ctx->fieldSystem, event); // Gunk's: the follower goes into its ball for cutscenes
 
     u32 unk4 = sub_0205AEA4(event, ctx->scriptPtr + unk2);
     u8 *movementCounter = FieldSysGetAttrAddr(ctx->fieldSystem, SCRIPTENV_ACTIVE_MOVEMENT_COUNTER);

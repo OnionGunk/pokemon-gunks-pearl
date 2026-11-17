@@ -39,6 +39,7 @@ u16 gGunkTestShiny; // 1: every DexNav search rolls the shiny path
 u16 gGunkTestBadges; // 1: all eight badges (Surf and the other field moves work)
 u16 gGunkTestMove;   // a move for the lead's first slot (57 = Surf)
 u16 gGunkTestFlags[4]; // story flags to set (0 = none), e.g. 0x115 for the Route 202 tutorial
+u16 gGunkTestStrong; // 1: the lead gets 999 in every stat
 
 BOOL Gunk_TestForceShiny(void) {
     return gGunkTestShiny != 0;
@@ -139,6 +140,14 @@ void Gunk_TestNewGame(struct SaveData *save) {
         if (gGunkTestMove != 0) {
             u32 move = gGunkTestMove;
             SetMonData(mon, MON_DATA_MOVE1, &move);
+        }
+        // Pearl: 999 in every stat, so a milestone battle (a gym, the League) ends on the first moves
+        if (gGunkTestStrong != 0) {
+            u32 stat = 999;
+
+            for (int data = MON_DATA_HP; data <= MON_DATA_SP_DEF; data++) {
+                SetMonData(mon, data, &stat);
+            }
         }
 
         Gunk_TestMakeOwn(save, mon);

@@ -48,7 +48,10 @@
 extern u8 GetMetatileBehavior(FieldSystem *fieldSystem, int x, int z);
 extern BOOL sub_02054AFC(u8 behavior);                // has walking encounters
 extern BOOL sub_0205481C(u8 behavior);                // surfable water
-extern fx32 sub_0204A708(FieldSystem *fieldSystem, int unused, fx32 x, fx32 z, u8 *heightSource);
+// the terrain height at (x, z), of the layer nearest nearHeight (bridges, a raised walkway over water); heightSource
+// is 0 when no layer is there
+extern fx32 sub_0204A708(FieldSystem *fieldSystem, fx32 nearHeight, fx32 x, fx32 z, u8 *heightSource);
+extern BOOL sub_0204A6B4(FieldSystem *fieldSystem, int x, int z); // the tile's collision bit (rocks, walls)
 extern void *ov06_0224B818(FieldSystem *fieldSystem, int x, int z, int shakeType); // the Poke Radar's shaking patch
 extern void sub_02064520(void *anim);                 // ends an overworld animation
 extern void ov06_0223D2DC(FieldSystem *fieldSystem, struct Pokemon *lead, int unused, void *params);
@@ -233,10 +236,20 @@ static BOOL IsRadarPatchAt(FieldSystem *fieldSystem, int x, int z) {
 }
 
 // Land: exactly the tiles a walking encounter can happen on (tall grass, very tall grass, cave floors, ...).
-// Water: surfable tiles.
+// Water: surfable tiles. Either way not a blocked tile (a rock on the water has water behavior), and level with the
+// player: on land within a unit (slopes); on water within SEARCH_WATER_HEIGHT_SLACK, since a surfing player
+// rides above the water and bobs (on the sea routes 4 units up) and the sea's surface isn't quite flat.
+#define SEARCH_LAND_HEIGHT_SLACK (FX32_ONE)
+#define SEARCH_WATER_HEIGHT_SLACK (FX32_ONE * 6)
+
+static fx32 TileHeight(FieldSystem *fieldSystem, fx32 nearHeight, int x, int z, u8 *heightSource) {
+    return sub_0204A708(fieldSystem, nearHeight, FX32_ONE * (16 * x + 8), FX32_ONE * (16 * z + 8), heightSource);
+}
+
 static BOOL IsSearchableTile(FieldSystem *fieldSystem, int x, int z, fx32 playerHeight) {
     u8 behavior = GetMetatileBehavior(fieldSystem, x, z);
     u8 heightSource;
+    fx32 diff;
 
     if (sSearch.water ? !sub_0205481C(behavior) : (!sub_02054AFC(behavior) || sub_0205481C(behavior))) {
         return FALSE;
@@ -246,7 +259,13 @@ static BOOL IsSearchableTile(FieldSystem *fieldSystem, int x, int z, fx32 player
         return FALSE;
     }
 
-    if (sub_0204A708(fieldSystem, 0, FX32_ONE * 16 * x, FX32_ONE * 16 * z, &heightSource) != playerHeight) {
+    if (sub_0204A6B4(fieldSystem, x, z)) {
+        return FALSE;
+    }
+
+    diff = TileHeight(fieldSystem, playerHeight, x, z, &heightSource) - playerHeight;
+
+    if (heightSource == 0 || Abs(diff) > (sSearch.water ? SEARCH_WATER_HEIGHT_SLACK : SEARCH_LAND_HEIGHT_SLACK)) {
         return FALSE;
     }
 

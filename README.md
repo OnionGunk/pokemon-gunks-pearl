@@ -11,8 +11,8 @@ friction out, for long playthroughs.
   mark. Pick one, then press **R** in the tall grass or a cave, or while surfing for a water Pokémon, to search for
   it. A Pokétch app shows the same area at a glance. Searches roll legal wild encounters, and search levels and
   chains raise the odds of good IVs and shinies. Searches are refused in the Great Marsh.
-- **Pokémon follow you**, ported from Following Platinum, with emotes and interactions; the follower returns to
-  its Poké Ball while you Surf.
+- **Pokémon follow you**, using HeartGold's own walking sprites for every species and form; the follower goes
+  into its Poké Ball for Surf, Rock Climb, Waterfall, the bike and cutscenes, and reacts when you talk to it.
 - **21 PC boxes** (18 in the original game): a living dex through Sinnoh with three boxes to spare.
 - **Faster play:** an INSTANT text speed (Options), faster HP and EXP bars, auto-run, eggs hatch twice as fast.
 - **Quick Run and Quick Ball** in wild battles: press **R** to run, or tap **L** to throw the ball shown under
@@ -59,8 +59,8 @@ vanilla ROM's hash, so it fails once the hack's changes are in; that is expected
 ## Credits
 
 - [pret](https://github.com/pret/pokediamond) for the Diamond and Pearl decompilation this hack is built on.
-- **Following Platinum** by Mikelan98 and collaborators: the follower sprites, data, interactions and logic
-  are ported from it.
+- [pret's pokeheartgold](https://github.com/pret/pokeheartgold) for the follower tables; the sprites come from
+  your own HeartGold ROM at build time. Following Platinum (Mikelan98 and collaborators) was the inspiration.
 - The DexNav idea comes from later Pokémon games and fan hacks such as Pokémon Unbound.
 
 Pokémon is © Nintendo, Creatures Inc. and GAME FREAK inc. This is a non-commercial fan project and contains

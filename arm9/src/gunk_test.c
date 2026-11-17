@@ -18,6 +18,9 @@
 #include "pokemon.h"
 #include "save.h"
 #include "save_vars_flags.h"
+#include "player_avatar.h"
+#include "map_object.h"
+#include "unk_02024E64.h"
 #include "save_local_field_data.h"
 
 // Test hooks for the emulator harness (emu/suite). They exist only in test builds (make GUNK_TEST=1); a
@@ -47,6 +50,17 @@ BOOL Gunk_TestSkipIntro(void) {
     return gGunkTestMode != 0;
 }
 
+// Pearl: the test Pokemon are the player's own (OT id, name, gender), so they obey at any level
+static void Gunk_TestMakeOwn(struct SaveData *save, struct Pokemon *mon) {
+    PlayerProfile *profile = Save_PlayerData_GetProfile(save);
+    u32 id = PlayerProfile_GetTrainerID(profile);
+    u32 gender = PlayerProfile_GetTrainerGender(profile);
+
+    SetMonData(mon, MON_DATA_OT_ID, &id);
+    SetMonData(mon, MON_DATA_OT_NAME, PlayerProfile_GetNamePtr(profile));
+    SetMonData(mon, MON_DATA_OT_GENDER, &gender);
+}
+
 void Gunk_TestNewGame(struct SaveData *save) {
     if (gGunkTestMode == 0) {
         return;
@@ -60,6 +74,15 @@ void Gunk_TestNewGame(struct SaveData *save) {
     name[2] = 0x013D;
     name[3] = 0x013E;
     name[4] = 0xFFFF;
+
+    // Pearl: and the rival a name, RIVAL (unset, it has no terminator, and the TV broadcasts that quote it hang)
+    name = GetRivalNamePtr(sub_02024EC0(save));
+    name[0] = 0x013C;
+    name[1] = 0x0133;
+    name[2] = 0x0140;
+    name[3] = 0x012B;
+    name[4] = 0x0136;
+    name[5] = 0xFFFF;
 
     // the new game's spawn: LocalFieldData starts with the player's current location
     u32 *location = (u32 *)Save_LocalFieldData_Get(save);
@@ -118,6 +141,7 @@ void Gunk_TestNewGame(struct SaveData *save) {
             SetMonData(mon, MON_DATA_MOVE1, &move);
         }
 
+        Gunk_TestMakeOwn(save, mon);
         Party_AddMon(SaveArray_Party_Get(save), mon);
         Pokedex_SetMonCaughtFlag(Save_Pokedex_Get(save), mon);
         Heap_Free(mon);
@@ -131,6 +155,7 @@ void Gunk_TestNewGame(struct SaveData *save) {
 
         ZeroMonData(mon);
         CreateMon(mon, gGunkTestPartner, 5, 32, FALSE, 0, 0, 0);
+        Gunk_TestMakeOwn(save, mon);
         Party_AddMon(SaveArray_Party_Get(save), mon);
         Pokedex_SetMonCaughtFlag(Save_Pokedex_Get(save), mon);
         Heap_Free(mon);
@@ -159,6 +184,7 @@ BOOL Gunk_TestDexNavKeys(FieldSystem *fieldSystem) {
 // Pearl: the harness writes map, x, z, facing to gGunkTestWarp[1..4] and sets [0]; the next free field frame flies
 // there (the map's own load scripts run), so one boot can visit every map (map and story sweeps).
 u16 gGunkTestWarp[5];
+u16 gGunkTestHeight;
 extern void sub_02049274(FieldSystem *fieldSystem, u16 mapId, s32 warpId, u16 x, u16 y, u32 direction); // Fly
 
 BOOL Gunk_TestWarp(FieldSystem *fieldSystem) {
@@ -166,6 +192,16 @@ BOOL Gunk_TestWarp(FieldSystem *fieldSystem) {
         gGunkTestWarp[0] = 0;
         sub_02049274(fieldSystem, gGunkTestWarp[1], -1, gGunkTestWarp[2], gGunkTestWarp[3], gGunkTestWarp[4]);
         return TRUE;
+    }
+
+    // then, if asked, lift the player to a height (MapObject currentY) the warp can't pick: raised floors such as
+    // Byron's platform
+    if (gGunkTestHeight) {
+        LocalMapObject *player = PlayerAvatar_GetMapObject(fieldSystem->playerAvatar);
+
+        MapObject_SetPositionFromXYZAndDirection(player, PlayerAvatar_GetXCoord(fieldSystem->playerAvatar), gGunkTestHeight,
+            PlayerAvatar_GetZCoord(fieldSystem->playerAvatar), DIR_NORTH);
+        gGunkTestHeight = 0;
     }
 
     return FALSE;

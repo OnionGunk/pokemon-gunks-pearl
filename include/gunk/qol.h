@@ -12,6 +12,7 @@ BOOL Gunk_ScrCmd_UseRepelAgain(ScriptContext *ctx);     // 722: uses one of the 
 BOOL Gunk_ScrCmd_ToggleEndlessRepel(ScriptContext *ctx); // 723 (p): var = new state
 BOOL Gunk_ScrCmd_ToggleExpAll(ScriptContext *ctx);      // 724 (p): var = new state
 BOOL Gunk_ScrCmd_HoneyTreeHours(ScriptContext *ctx);    // 725 (p): var = hours until Pokemon gather (0 = now); number in 0
+void Gunk_RadarWaitPatches(TaskManager *taskManager, FieldSystem *fieldSystem, int *state); // radar task state 2
 
 // Repel step update (overlay 6) gets the step counter through this; Endless Repel keeps it from running out.
 u8 *Gunk_RepelStepCounter(void *roamers);

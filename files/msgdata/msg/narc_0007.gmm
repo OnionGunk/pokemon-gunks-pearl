@@ -496,4 +496,8 @@
 		<attribute name="window_context_name">used</attribute>
 		<language name="English">It can’t be used when you have\nsomeone with you.</language>
 	</row>
+	<row id="narc_0007_00112" index="112">
+		<attribute name="window_context_name">used</attribute>
+		<language name="English">The Poké Radar chain is at {STRVAR_1 52, 0}!</language>
+	</row>
 </body>

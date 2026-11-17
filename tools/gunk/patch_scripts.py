@@ -415,8 +415,38 @@ def patch_honey():
     print('narc_0205: honey tree patched (%d bytes)' % len(data))
 
 
+# ---- The Poke Radar says how long the chain is (radar script 3 = 8972, message bank 7 row 112) ----
+RADAR_CHAIN_SCRIPT = """
+L_GUNK_RADAR_CHAIN:
+    LockAllEvents
+    Unk00D5 0, 0x8000
+    Unk002C 112
+    WaitButton
+    CloseMessageBox
+    ReleaseAllEvents
+    End
+"""
+
+
+def patch_radar():
+    path = os.path.join(SCRIPTS, 'narc_0390.bin')
+    text = dpscript.disasm(open(path, 'rb').read())
+    if 'Unk002C 0x70' in text or 'Unk002C 112' in text:
+        print('narc_0390: radar chain already patched')
+        return
+    assert text.count('.endscripts') == 1 and text.count('.script ') == 2, 'unexpected radar scripts'
+    text = text.replace('.endscripts', '.script L_GUNK_RADAR_CHAIN ; 3\n.endscripts')
+    text = text.replace('    .align 4', RADAR_CHAIN_SCRIPT + '\n    .align 4')
+    data = dpscript.asm(text)
+    check = dpscript.disasm(data)
+    assert check.count('.script ') == 3 and 'Unk002C 0x70' in check, 'reassembled radar scripts lost the chain message'
+    open(path, 'wb').write(data)
+    print('narc_0390: radar chain patched (%d bytes)' % len(data))
+
+
 PARTS = {'common': lambda: patch_common(), 'tutor': lambda: (patch_tutor_script(), patch_tutor_events()),
-         'route202': lambda: patch_route202(), 'honey': lambda: patch_honey()}
+         'route202': lambda: patch_route202(), 'honey': lambda: patch_honey(),
+         'radar': lambda: patch_radar()}
 
 if __name__ == '__main__':
     for part in sys.argv[1:] or list(PARTS):

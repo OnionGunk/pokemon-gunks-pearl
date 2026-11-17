@@ -7,6 +7,8 @@
 UNK_020F7374: ; 0x020F7374
 	.byte 0x58, 0x44, 0x30, 0x1C, 0x20, 0x18, 0x10, 0x08, 0x62, 0x4E, 0x3A, 0x26
 
+	.extern Gunk_RadarWaitPatches
+
 	.text
 
 	thumb_func_start sub_0205DD18
@@ -919,15 +921,15 @@ _0205E3C0:
 	mov r0, #0x2
 	str r0, [r5, #0x0]
 	b _0205E3FC
-_0205E3CC:
-	add r4, #0x90
-	ldr r0, [r4, #0x0]
-	bl sub_0205DF9C
-	cmp r0, #0x0
-	beq _0205E3FC
-	mov r0, #0x4
-	str r0, [r5, #0x0]
+_0205E3CC: ; Gunk: the patches have finished shaking -> say how long the chain is (same size)
+	add r0, r7, #0x0
+	add r1, r4, #0x0
+	add r2, r5, #0x0
+	bl Gunk_RadarWaitPatches
 	b _0205E3FC
+	nop
+	nop
+	nop
 _0205E3DE:
 	bl Heap_Free
 	ldr r0, [r4, #0x34]

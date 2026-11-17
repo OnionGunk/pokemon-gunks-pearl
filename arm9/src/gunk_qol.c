@@ -182,3 +182,33 @@ BOOL Gunk_ScrCmd_HoneyTreeHours(ScriptContext *ctx) {
 
     return FALSE;
 }
+
+// ---- Poke Radar: say how long the chain is (as in Gunk's Platinum) ----
+// The radar task (sub_0205E30C, unk_0205DD18.s) waits in its state 2 until the patches have finished shaking; it now
+// calls this instead. Once they have, and a chain is going, it runs radar script 3 (8972): "The Poke Radar chain is
+// at N!" with N in var 0x8000, the way the battery message gets its step count.
+#define RADAR_FIELD_OFFSET      0x90 // FieldSystem: RadarChain *
+#define RADAR_CHAIN_COUNT       0x04 // RadarChain: int count
+#define RADAR_TASK_DONE         4
+#define SCRIPT_RADAR_CHAIN      8972 // scr_seq 390, message bank 7 (112)
+#define SCRIPTENV_VAR_8000      0x29
+
+extern BOOL sub_0205DF9C(void *radar);                   // the patches have finished shaking
+extern void QueueScript(TaskManager *taskManager, u16 script, LocalMapObject *lastInteracted, void *param3);
+
+void Gunk_RadarWaitPatches(TaskManager *taskManager, FieldSystem *fieldSystem, int *state) {
+    u8 *radar = *(u8 **)((u8 *)fieldSystem + RADAR_FIELD_OFFSET);
+    int count;
+
+    if (!sub_0205DF9C(radar)) {
+        return;
+    }
+
+    *state = RADAR_TASK_DONE;
+    count = *(int *)(radar + RADAR_CHAIN_COUNT);
+
+    if (count > 0) {
+        QueueScript(taskManager, SCRIPT_RADAR_CHAIN, NULL, NULL);
+        *(u16 *)FieldSysGetAttrAddr(fieldSystem, SCRIPTENV_VAR_8000) = (u16)count;
+    }
+}

@@ -123,7 +123,7 @@ UNK_020F2DB4: ; 0x020F2DB4
 
 	.global sNumScriptCmds
 sNumScriptCmds: ; 0x020F34DC
-	.word 725 ; NELEMS(gScriptCmdTable) (Gunk's: 721 + 4)
+	.word 726 ; NELEMS(gScriptCmdTable) (Gunk's: 721 + 5)
 
 	.global UNK_020F34E0
 UNK_020F34E0: ; 0x020F34E0
@@ -874,6 +874,7 @@ gScriptCmdTable: ; 0x020F355C
 	.word Gunk_ScrCmd_UseRepelAgain ; 722
 	.word Gunk_ScrCmd_ToggleEndlessRepel ; 723
 	.word Gunk_ScrCmd_ToggleExpAll ; 724
+	.word Gunk_ScrCmd_HoneyTreeHours ; 725 Pearl: honey tree hours
 
 	.text
 

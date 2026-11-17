@@ -9373,6 +9373,7 @@
 .extern Gunk_ScrCmd_UseRepelAgain
 .extern Gunk_ScrCmd_ToggleEndlessRepel
 .extern Gunk_ScrCmd_ToggleExpAll
+.extern Gunk_ScrCmd_HoneyTreeHours
 .extern GunkDexNav_ItemBagUse
 .extern GunkDexNav_ItemFieldUse
 .extern GunkDexNav_ItemCheck

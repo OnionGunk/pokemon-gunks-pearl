@@ -150,3 +150,35 @@ u32 Gunk_ExpAllAmount(u32 exp, u8 *battleCtx) {
 
     return exp;
 }
+
+// ---- Honey trees: how long until Pokémon gather (opcode 725) ----
+// A slathered tree's timer starts at 24 hours (UpdateHoneyTree) and Pokémon gather once 18 hours or less remain,
+// so the hours left are the minutes above 18 hours, rounded up. The number is buffered in string 0.
+
+#define HONEY_TREE_NONE        0x15
+#define HONEY_READY_MINUTES    (18 * 60)
+
+extern int ov05_021F50FC(u32 mapId);                    // the map's honey tree, HONEY_TREE_NONE if none
+extern void *sub_0202A9BC(void *roamers);               // the honey tree states
+extern u32 *sub_0202A9C8(int tree, void *treeStates);   // a tree; [0] = minutes left
+
+BOOL Gunk_ScrCmd_HoneyTreeHours(ScriptContext *ctx) {
+    u16 *result = ScriptGetVarPointer(ctx);
+    FieldSystem *fieldSystem = ctx->fieldSystem;
+    int tree = ov05_021F50FC(fieldSystem->location->mapId);
+
+    *result = 0;
+
+    if (tree != HONEY_TREE_NONE) {
+        int minutes = (int)sub_0202A9C8(tree, sub_0202A9BC(Save_Roamers_Get(fieldSystem->saveData)))[0] - HONEY_READY_MINUTES;
+
+        if (minutes > 0) {
+            MessageFormat **messageFormat = FieldSysGetAttrAddr(fieldSystem, SCRIPTENV_MESSAGE_FORMAT);
+
+            *result = (u16)((minutes + 59) / 60);
+            BufferIntegerAsString(*messageFormat, 0, *result, 2, PRINTING_MODE_LEFT_ALIGN, TRUE);
+        }
+    }
+
+    return FALSE;
+}

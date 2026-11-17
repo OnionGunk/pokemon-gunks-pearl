@@ -18,6 +18,7 @@ also give the DexNav (item 465) and say how it works (messages 14 and 15). Befor
 Run one part alone with `python3 tools/gunk/patch_scripts.py route202`.
 """
 import os
+import re
 import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -357,8 +358,65 @@ def patch_route202():
     print('narc_0393: patched (%d bytes)' % len(data))
 
 
+# ---- Honey trees say how long until Pokemon gather (opcode 725, message 147) ----
+HONEY_NOT_READY_OLD = """    Unk002C 0x30
+    WaitButton
+    CloseMessageBox
+    ReleaseAllEvents
+    End
+"""
+
+HONEY_NOT_READY_NEW = """    Gunk_HoneyTreeHours 0x800C
+    CompareVarToValue 0x800C, 0
+    GoToIf 1, L_GUNK_HONEY_PLAIN
+    Unk002C 147
+    WaitButton
+    CloseMessageBox
+    ReleaseAllEvents
+    End
+
+L_GUNK_HONEY_PLAIN:
+    Unk002C 0x30
+    WaitButton
+    CloseMessageBox
+    ReleaseAllEvents
+    End
+"""
+
+
+HONEY_HAS_HONEY_NEW = """    Gunk_HoneyTreeHours 0x800C
+    CompareVarToValue 0x800C, 0
+    GoToIf 1, L_GUNK_HONEY_PLAIN2
+    Unk002C 147
+    WaitButton
+    GoTo %s
+
+L_GUNK_HONEY_PLAIN2:
+    Unk002C 0x31
+    GoTo %s
+"""
+
+
+def patch_honey():
+    path = os.path.join(SCRIPTS, 'narc_0205.bin')
+    text = dpscript.disasm(open(path, 'rb').read())
+    if 'Gunk_HoneyTreeHours' in text:
+        print('narc_0205: honey tree already patched')
+        return
+    assert text.count(HONEY_NOT_READY_OLD) == 1, 'unexpected honey tree script'
+    text = text.replace(HONEY_NOT_READY_OLD, HONEY_NOT_READY_NEW)
+    # with Honey in the Bag: say the hours, then offer to slather more as before
+    m = re.findall(r'    Unk002C 0x31\n    GoTo (L_[0-9A-F]+)\n', text)
+    assert len(m) == 1, 'unexpected honey tree script (has Honey)'
+    text = text.replace('    Unk002C 0x31\n    GoTo %s\n' % m[0], HONEY_HAS_HONEY_NEW % (m[0], m[0]))
+    data = dpscript.asm(text)
+    assert 'Gunk_HoneyTreeHours' in dpscript.disasm(data), 'reassembled scripts lost the honey tree change'
+    open(path, 'wb').write(data)
+    print('narc_0205: honey tree patched (%d bytes)' % len(data))
+
+
 PARTS = {'common': lambda: patch_common(), 'tutor': lambda: (patch_tutor_script(), patch_tutor_events()),
-         'route202': lambda: patch_route202()}
+         'route202': lambda: patch_route202(), 'honey': lambda: patch_honey()}
 
 if __name__ == '__main__':
     for part in sys.argv[1:] or list(PARTS):

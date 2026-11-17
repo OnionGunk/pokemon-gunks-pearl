@@ -162,6 +162,7 @@ typedef struct DexNavSearch {
     BOOL rPressed;
     int playerX; // where the player stood on the last free field frame (for the emulator tests)
     int playerZ;
+    u32 afterIvs; // the RNG state after the IVs: the held item and Unown's letter come next, as in a wild encounter
 } DexNavSearch;
 
 typedef struct EncounterFrame {
@@ -169,6 +170,7 @@ typedef struct EncounterFrame {
     u8 ivs[NUM_STATS];
     u8 slot;
     u8 level;
+    u32 afterIvs;
 } EncounterFrame;
 
 typedef struct SearchTable {
@@ -351,6 +353,7 @@ static BOOL GenerateEncounterFrame(u32 seed, const SearchTable *table, Encounter
     frame->ivs[4] = (ivs2 >> 5) & 0x1F;
     frame->ivs[5] = (ivs2 >> 10) & 0x1F;
     frame->personality = personality;
+    frame->afterIvs = state;
     frame->slot = slot;
     frame->level = level;
 
@@ -532,6 +535,7 @@ static BOOL RollHiddenMon(FieldSystem *fieldSystem) {
     }
 
     sSearch.personality = best.personality;
+    sSearch.afterIvs = best.afterIvs;
     sSearch.level = best.level;
     sSearch.perfectIVs = (u8)CountPerfectIVs(&best);
 
@@ -998,12 +1002,18 @@ static void StartPatchBattle(FieldSystem *fieldSystem) {
     struct Pokemon *lead = Party_GetMonByIndex(SaveArray_Party_Get(fieldSystem->saveData), 0);
     BattleSetup *setup = BattleSetup_New(HEAP_ID_FIELD, 0);
     struct Pokemon *mon;
+    u32 seed;
 
     BattleSetup_InitFromFieldSystem(setup, fieldSystem);
     MI_CpuClear8(params, sizeof(params));
     ov06_0223D2DC(fieldSystem, lead, 0, params);
     mon = CreateEncounterMon(fieldSystem, params);
+    // continue the encounter's own RNG frame, so the held item roll and Unown's letter are the two calls after
+    // the IVs (PKHeX checks the letter against that frame); the game's RNG then carries on where it was
+    seed = GetLCRNGSeed();
+    SetLCRNGSeed(sSearch.afterIvs);
     ov06_0223D1BC(1, params, mon, setup);
+    SetLCRNGSeed(seed);
     Heap_Free(mon);
 
     GunkSave_IncrementSearchLevel(fieldSystem->saveData, sSearch.species);

@@ -11,5 +11,6 @@ void Gunk_TestNewGame(struct SaveData *save);
 BOOL Gunk_TestSkipIntro(void);
 BOOL Gunk_TestForceShiny(void);
 BOOL Gunk_TestDexNavKeys(FieldSystem *fieldSystem);
+BOOL Gunk_TestWarp(FieldSystem *fieldSystem); // Pearl: warp anywhere (test builds)
 
 #endif // POKEDIAMOND_GUNK_TEST_H

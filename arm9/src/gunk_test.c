@@ -71,7 +71,11 @@ void Gunk_TestNewGame(struct SaveData *save) {
     location[4] = 1;
 
     if (gGunkTestBadges) {
+        // 1: all eight; 0x100 | mask: just those (Pearl milestones: all but the gym being tested)
         for (int badge = 0; badge < 8; badge++) {
+            if (gGunkTestBadges >= 0x100 && !(gGunkTestBadges & (1 << badge))) {
+                continue;
+            }
             PlayerProfile_SetBadgeFlag(Save_PlayerData_GetProfile(save), (u32)badge);
         }
     }
@@ -151,7 +155,27 @@ BOOL Gunk_TestDexNavKeys(FieldSystem *fieldSystem) {
 
     return FALSE;
 }
+
+// Pearl: the harness writes map, x, z, facing to gGunkTestWarp[1..4] and sets [0]; the next free field frame flies
+// there (the map's own load scripts run), so one boot can visit every map (map and story sweeps).
+u16 gGunkTestWarp[5];
+extern void sub_02049274(FieldSystem *fieldSystem, u16 mapId, s32 warpId, u16 x, u16 y, u32 direction); // Fly
+
+BOOL Gunk_TestWarp(FieldSystem *fieldSystem) {
+    if (gGunkTestWarp[0]) {
+        gGunkTestWarp[0] = 0;
+        sub_02049274(fieldSystem, gGunkTestWarp[1], -1, gGunkTestWarp[2], gGunkTestWarp[3], gGunkTestWarp[4]);
+        return TRUE;
+    }
+
+    return FALSE;
+}
 #else
+BOOL Gunk_TestWarp(FieldSystem *fieldSystem) {
+#pragma unused(fieldSystem)
+    return FALSE;
+}
+
 BOOL Gunk_TestForceShiny(void) {
     return FALSE;
 }

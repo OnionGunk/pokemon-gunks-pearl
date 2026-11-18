@@ -38,6 +38,7 @@ u16 gGunkTestMove;   // a move for the lead's first slot (57 = Surf)
 u16 gGunkTestLeadShiny;      // followers: 1 = the lead is shiny
 u16 gGunkTestLeadFriendship; // followers: the lead's friendship (0 = the species' base value)
 u16 gGunkTestFlags[4]; // story flags to set (0 = none), e.g. 0x115 for the Route 202 tutorial
+u16 gGunkTestTeam[10]; // party slots 2-6 as (species, level) pairs, random IVs and level-up moves (0 = none)
 
 BOOL Gunk_TestForceShiny(void) {
     return gGunkTestShiny != 0;
@@ -146,6 +147,18 @@ void Gunk_TestNewGame(struct SaveData *save) {
         Party_AddMon(SaveArray_Party_Get(save), mon);
         Pokedex_SetMonCaughtFlag(Save_Pokedex_Get(save), mon);
         Heap_Free(mon);
+    }
+
+    for (int i = 0; i < 10; i += 2) {
+        if (gGunkTestTeam[i] != 0) {
+            struct Pokemon *mon = AllocMonZeroed((enum HeapID)77);
+
+            ZeroMonData(mon);
+            CreateMon(mon, gGunkTestTeam[i], gGunkTestTeam[i + 1] ? gGunkTestTeam[i + 1] : 5, 32, FALSE, 0, 0, 0);
+            Party_AddMon(SaveArray_Party_Get(save), mon);
+            Pokedex_SetMonCaughtFlag(Save_Pokedex_Get(save), mon);
+            Heap_Free(mon);
+        }
     }
 
     if (gGunkTestSeen != 0) {

@@ -215,6 +215,7 @@ void Gunk_TestNewGame(struct SaveData *save) {
         Heap_Free(mon);
     }
 
+
     if (gGunkTestSeen != 0) {
         struct Pokemon *mon = AllocMonZeroed((enum HeapID)77); // the new-game overlay's heap
 

@@ -42,6 +42,9 @@ u16 gGunkTestLeadShiny;      // followers: 1 = the lead is shiny
 u16 gGunkTestLeadFriendship; // followers: the lead's friendship (0 = the species' base value)
 u16 gGunkTestFlags[4]; // story flags to set (0 = none), e.g. 0x115 for the Route 202 tutorial
 u16 gGunkTestStrong; // 1: the lead gets 999 in every stat
+// real-team playthrough: up to 6 Pokemon after the lead (species, level, held item, moves 1-4; 0 = the level's
+// own moves), with normal stats and random IVs; the player is their original trainer
+u16 gGunkTestTeam[6][7];
 
 BOOL Gunk_TestForceShiny(void) {
     return gGunkTestShiny != 0;
@@ -162,6 +165,36 @@ void Gunk_TestNewGame(struct SaveData *save) {
             }
         }
 
+        Gunk_TestMakeOwn(save, mon);
+        Party_AddMon(SaveArray_Party_Get(save), mon);
+        Pokedex_SetMonCaughtFlag(Save_Pokedex_Get(save), mon);
+        Heap_Free(mon);
+    }
+
+    for (int i = 0; i < 6; i++) {
+        struct Pokemon *mon;
+        u16 *t = gGunkTestTeam[i];
+
+        if (t[0] == 0) {
+            continue;
+        }
+        mon = AllocMonZeroed((enum HeapID)77);
+        ZeroMonData(mon);
+        CreateMon(mon, t[0], t[1] ? t[1] : 50, 32, FALSE, 0, 0, 0);
+        if (t[2] != 0) {
+            u32 item = t[2];
+            SetMonData(mon, MON_DATA_HELD_ITEM, &item);
+        }
+        for (int m = 0; m < 4; m++) {
+            if (t[3 + m] != 0) {
+                u32 move = t[3 + m];
+                u32 pp;
+
+                SetMonData(mon, MON_DATA_MOVE1 + m, &move);
+                pp = GetMonData(mon, MON_DATA_MOVE1_MAX_PP + m, NULL); // the move's PP with no PP Ups
+                SetMonData(mon, MON_DATA_MOVE1_PP + m, &pp);
+            }
+        }
         Gunk_TestMakeOwn(save, mon);
         Party_AddMon(SaveArray_Party_Get(save), mon);
         Pokedex_SetMonCaughtFlag(Save_Pokedex_Get(save), mon);

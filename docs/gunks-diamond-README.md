@@ -54,8 +54,9 @@ exact release, or turn the companion off; a mismatched build could crash the gam
 
 No proprietary tools needed. See [`tools/gunk/README.md`](tools/gunk/README.md): it sets up the compilers'
 wrappers, the linker scripts and the ROM packer from free sources, and a clean pret build reproduces retail
-Diamond exactly. The follower sprites are copied from your own HeartGold (USA) ROM by
-`tools/gunk/followers/extract_hg.py`. Then run `make COMPARE=0`; `tools/patch/bps.py make` makes the patch.
+Diamond exactly. The follower sprites and emote bubbles come from HeartGold (USA). They're committed under
+`files/data/mmodel/mmodel/`, and `tools/gunk/followers/extract_hg.py` makes them again from your own HeartGold
+ROM. Then run `make COMPARE=0`; `tools/patch/bps.py make` makes the patch.
 
 ## Credits
 
@@ -65,5 +66,6 @@ Diamond exactly. The follower sprites are copied from your own HeartGold (USA) R
 - Following Platinum by Mikelan98 and collaborators inspired the followers; no assets are taken from it.
 - The DexNav idea comes from later Pokémon games and fan hacks such as Pokémon Unbound.
 
-Pokémon is © Nintendo, Creatures Inc. and GAME FREAK inc. This is a non-commercial fan project and contains
-no ROM data; you need your own legally dumped copy of the game.
+Pokémon is © Nintendo, Creatures Inc. and GAME FREAK inc. This is a non-commercial fan project. The repo and the
+patch don't contain Diamond, but they do include the HeartGold follower sprites and emote bubbles. You need your
+own legally dumped copy of Diamond to play.

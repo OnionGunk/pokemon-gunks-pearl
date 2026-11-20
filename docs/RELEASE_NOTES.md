@@ -29,6 +29,8 @@ commit reproduces the patched ROM byte for byte.
 - Save cycles, full boxes, damaged-save recovery and power cuts during a save.
 - Menus.
 - Every gym, the Elite Four, the Champion and the Hall of Fame, each gym badge kept after a save and power cycle.
+- A real-team playthrough of every gym and the League: a team a player would have by then, picking moves by
+  type and using no items, beats all 8 leaders, the Elite Four and Cynthia.
 - Every person and scene the hack changed, and the honey tree and Poké Radar messages.
 - Warps into all 477 maps. The 6 that hang also hang in the original game when entered that way, and the
   Jubilife TV elevator only fails because the test teleports straight into it.
